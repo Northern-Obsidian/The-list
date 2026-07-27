@@ -1,4 +1,4 @@
-import * as AuthSession from 'expo-auth-session';
+import { AuthRequest, DiscoveryDocument, makeRedirectUri } from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import { getDatabase } from '@/db';
 import { backups } from '@/db/schema';
@@ -12,12 +12,13 @@ const DRIVE_FILES_URL = 'https://www.googleapis.com/drive/v3/files';
 
 const CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_DRIVE_CLIENT_ID || '';
 
-const discovery = AuthSession.useAutoDiscovery
-  ? undefined
-  : { authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth', tokenEndpoint: 'https://oauth2.googleapis.com/token' };
+const discovery: DiscoveryDocument = {
+  authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+  tokenEndpoint: 'https://oauth2.googleapis.com/token',
+};
 
 function getRedirectUri() {
-  return AuthSession.makeRedirectUri({ useProxy: true });
+  return makeRedirectUri();
 }
 
 export async function signInToDrive(): Promise<string | null> {
@@ -28,14 +29,14 @@ export async function signInToDrive(): Promise<string | null> {
   }
 
   const redirectUri = getRedirectUri();
-  const authRequest = new AuthSession.AuthRequest({
+  const authRequest = new AuthRequest({
     clientId,
     scopes: SCOPES,
     redirectUri,
     usePKCE: true,
   });
 
-  const result = await authRequest.prompAsync(discovery as any);
+  const result = await authRequest.promptAsync(discovery);
   if (result.type === 'success' && result.authentication?.accessToken) {
     return result.authentication.accessToken;
   }

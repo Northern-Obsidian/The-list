@@ -277,6 +277,7 @@ export default function HomeScreen() {
           )}
         </GlassCard>
 
+        </>
         )}
 
         <ThemedView style={styles.quickLinks}>
