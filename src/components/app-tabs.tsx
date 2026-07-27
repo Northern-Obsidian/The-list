@@ -1,32 +1,28 @@
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
-import { useColorScheme } from 'react-native';
 
-import { Colors } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+
+const TAB_LABELS: Record<string, string> = {
+  index: 'Home',
+  search: 'Search',
+  library: 'Library',
+  stats: 'Stats',
+  settings: 'Settings',
+};
 
 export default function AppTabs() {
-  const scheme = useColorScheme();
-  const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
+  const colors = useTheme();
 
   return (
     <NativeTabs
       backgroundColor={colors.background}
       indicatorColor={colors.backgroundElement}
       labelStyle={{ selected: { color: colors.text } }}>
-      <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          src={require('@/assets/images/tabIcons/home.png')}
-          renderingMode="template"
-        />
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="explore">
-        <NativeTabs.Trigger.Label>Explore</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          src={require('@/assets/images/tabIcons/explore.png')}
-          renderingMode="template"
-        />
-      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="index" accessibilityLabel="Home" />
+      <NativeTabs.Trigger name="search" accessibilityLabel="Search" />
+      <NativeTabs.Trigger name="library" accessibilityLabel="Library" />
+      <NativeTabs.Trigger name="stats" accessibilityLabel="Statistics" />
+      <NativeTabs.Trigger name="settings" accessibilityLabel="Settings" />
     </NativeTabs>
   );
 }
