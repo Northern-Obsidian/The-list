@@ -34,14 +34,14 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#202020",
-          "image": "./assets/images/icons/platinum.png",
+          "image": "./assets/images/icons/silver.png",
           "imageWidth": 76
         }
       ],
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/icons/luxury.png",
+          "icon": "./assets/images/icons/main.png",
           "color": "#3C9FFE",
           "sounds": [
             "./assets/sounds/notification.wav"
