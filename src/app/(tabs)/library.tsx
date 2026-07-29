@@ -6,6 +6,7 @@ import { router } from 'expo-router';
 import { AnimatedList } from '@/components/animated-list';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Icon } from '@/components/ui/icon';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -126,9 +127,7 @@ export default function LibraryScreen() {
                 ]}
                 onPress={() => setViewMode(mode)}
               >
-                <ThemedText type="small" themeColor={viewMode === mode ? 'text' : 'textSecondary'}>
-                  {mode === 'grid' ? '⊞' : '☰'}
-                </ThemedText>
+                <Icon name={mode === 'grid' ? 'square.grid.2x2' : 'list.bullet'} size={16} color={viewMode === mode ? theme.text : theme.textSecondary} />
               </Pressable>
             ))}
           </ThemedView>

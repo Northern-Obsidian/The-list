@@ -16,7 +16,7 @@ export function Screen({ children, scroll = false, style, ...rest }: ScreenProps
   const theme = useTheme();
 
   const content = (
-    <ThemedView style={[styles.container, style]} {...rest}>
+    <ThemedView style={[styles.container, { paddingTop: insets.top }, style]} {...rest}>
       <View style={[styles.inner, { paddingBottom: insets.bottom + BottomTabInset + Spacing.three }]}>
         {children}
       </View>
@@ -28,7 +28,6 @@ export function Screen({ children, scroll = false, style, ...rest }: ScreenProps
       <ScrollView
         style={[styles.scroll, { backgroundColor: theme.background }]}
         contentContainerStyle={styles.scrollContent}
-        contentInset={{ bottom: insets.bottom + BottomTabInset + Spacing.three }}
         contentInsetAdjustmentBehavior="automatic">
         {content}
       </ScrollView>
@@ -43,17 +42,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexGrow: 1,
   },
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
   },
   inner: {
     flex: 1,
     paddingHorizontal: Spacing.four,
     maxWidth: MaxContentWidth,
+    alignSelf: 'center',
+    width: '100%',
   },
 });

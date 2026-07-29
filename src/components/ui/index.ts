@@ -28,3 +28,6 @@ export { TagPicker } from './tag-picker';
 export type { TagPickerTag } from './tag-picker';
 export { BarChart } from './bar-chart';
 export type { BarChartData } from './bar-chart';
+export { Icon } from './icon';
+export type { IconName } from './icon';
+export { iconForMediaType, MEDIA_TYPE_ICONS, COLLECTION_ICONS } from './icon';

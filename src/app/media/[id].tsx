@@ -8,6 +8,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Badge } from '@/components/ui/badge';
 import { ProgressBar } from '@/components/ui/progress-bar';
+import { Icon, iconForMediaType } from '@/components/ui/icon';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { ScreenLoader } from '@/components/ui/screen-loader';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
@@ -20,11 +21,7 @@ import { getWatchLinks, saveWatchLinks, type WatchLink } from '@/services/watch-
 import { generateId } from '@/utils/generate-id';
 import { SERIES_TYPES } from '@/types/media';
 
-const TYPE_ICONS: Record<string, string> = {
-  movie: '🎬', tv_show: '📺', anime: '📖', documentary: '🎥',
-  web_series: '📹', mini_series: '🎞️', ova: '💿', cartoon: '🖍️',
-  reality_show: '📺', podcast: '🎙️', audiobook: '🎧', book: '📚', game: '🎮', drama: '🎭',
-};
+
 
 export default function MediaDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -140,7 +137,7 @@ export default function MediaDetailScreen() {
         </View>
 
         <ThemedView style={styles.hero}>
-          <ThemedText style={styles.posterPlaceholder}>{TYPE_ICONS[item.mediaType] || '🎬'}</ThemedText>
+          <Icon name={iconForMediaType(item.mediaType)} size={80} color={theme.textSecondary} />
           <Badge label={item.mediaType.replace(/_/g, ' ')} variant="filled" style={styles.typeBadge} />
         </ThemedView>
 
@@ -163,7 +160,7 @@ export default function MediaDetailScreen() {
             style={({ pressed }) => [styles.seriesLink, { backgroundColor: theme.primary }, pressed && { opacity: 0.7 }]}
             onPress={() => router.push(`/series/${id}`)}
           >
-            <ThemedText style={{ color: '#FFF', fontWeight: '600' }}>📺 View Series Progress</ThemedText>
+            <ThemedText style={{ color: '#FFF', fontWeight: '600' }}> View Series Progress</ThemedText>
           </Pressable>
         )}
 
@@ -172,25 +169,25 @@ export default function MediaDetailScreen() {
             style={({ pressed }) => [styles.ratingBtn, { backgroundColor: theme.backgroundElement }, ratingData?.heart && { backgroundColor: theme.error }, pressed && { opacity: 0.7 }]}
             onPress={() => handleRatingToggle('heart')}
           >
-            <ThemedText style={ratingData?.heart ? { color: '#FFF' } : undefined}>❤️</ThemedText>
+            <Icon name="heart" size={24} color={ratingData?.heart ? '#FFF' : theme.textSecondary} />
           </Pressable>
           <Pressable
             style={({ pressed }) => [styles.ratingBtn, { backgroundColor: theme.backgroundElement }, ratingData?.thumbsUp && { backgroundColor: theme.primary }, pressed && { opacity: 0.7 }]}
             onPress={() => handleRatingToggle('thumbsUp')}
           >
-            <ThemedText style={ratingData?.thumbsUp ? { color: '#FFF' } : undefined}>👍</ThemedText>
+            <Icon name="hand.thumbsup" size={24} color={ratingData?.thumbsUp ? '#FFF' : theme.textSecondary} />
           </Pressable>
           <Pressable
             style={({ pressed }) => [styles.ratingBtn, { backgroundColor: theme.backgroundElement }, ratingData?.masterpiece && { backgroundColor: theme.warning }, pressed && { opacity: 0.7 }]}
             onPress={() => handleRatingToggle('masterpiece')}
           >
-            <ThemedText style={ratingData?.masterpiece ? { color: '#FFF' } : undefined}>🏆</ThemedText>
+            <Icon name="trophy" size={24} color={ratingData?.masterpiece ? '#FFF' : theme.textSecondary} />
           </Pressable>
           <Pressable
             style={({ pressed }) => [styles.ratingBtn, { backgroundColor: theme.backgroundElement }, ratingData?.needRewatch && { backgroundColor: theme.success }, pressed && { opacity: 0.7 }]}
             onPress={() => handleRatingToggle('needRewatch')}
           >
-            <ThemedText style={ratingData?.needRewatch ? { color: '#FFF' } : undefined}>🔄</ThemedText>
+            <Icon name="arrow.triangle.2.circlepath" size={24} color={ratingData?.needRewatch ? '#FFF' : theme.textSecondary} />
           </Pressable>
         </ThemedView>
 
@@ -205,7 +202,7 @@ export default function MediaDetailScreen() {
         <View style={styles.metaRow}>
           {item.year && <ThemedText type="small" themeColor="textSecondary">{item.year}</ThemedText>}
           {item.runtime && <ThemedText type="small" themeColor="textSecondary">{item.runtime} min</ThemedText>}
-          {item.personalRating && <ThemedText type="small" themeColor="textSecondary">⭐ {item.personalRating}/10</ThemedText>}
+          {item.personalRating && <ThemedText type="small" themeColor="textSecondary">{item.personalRating}/10</ThemedText>}
           {seriesData?.airStatus && (
             <Badge
               label={seriesData.airStatus === 'airing' ? 'Airing' : seriesData.airStatus === 'completed' ? 'Completed' : 'Upcoming'}
@@ -229,13 +226,16 @@ export default function MediaDetailScreen() {
 
         <View style={styles.actionRow}>
           <Pressable style={({ pressed }) => [styles.actionBtn, { backgroundColor: theme.backgroundElement }, pressed && { opacity: 0.7 }]} onPress={() => router.push(`/media/${id}/review`)}>
-            <ThemedText type="small">✍️ Review</ThemedText>
+            <Icon name="square.and.pencil" size={14} color={theme.text} />
+            <ThemedText type="small"> Review</ThemedText>
           </Pressable>
           <Pressable style={({ pressed }) => [styles.actionBtn, { backgroundColor: theme.backgroundElement }, pressed && { opacity: 0.7 }]} onPress={() => router.push(`/media/${id}/edit`)}>
-            <ThemedText type="small">✏️ Edit</ThemedText>
+            <Icon name="pencil" size={14} color={theme.text} />
+            <ThemedText type="small"> Edit</ThemedText>
           </Pressable>
           <Pressable style={({ pressed }) => [styles.actionBtn, { backgroundColor: theme.error }, pressed && { opacity: 0.7 }]} onPress={handleDelete}>
-            <ThemedText style={{ color: '#FFF' }}>🗑️ Delete</ThemedText>
+            <Icon name="trash" size={14} color="#FFF" />
+            <ThemedText style={{ color: '#FFF' }}> Delete</ThemedText>
           </Pressable>
         </View>
       </ThemedView>
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, paddingHorizontal: Spacing.four, maxWidth: MaxContentWidth, gap: Spacing.four, paddingBottom: Spacing.four },
   header: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: Spacing.three },
   hero: { height: 300, borderRadius: Spacing.four, backgroundColor: 'transparent', justifyContent: 'center', alignItems: 'center', position: 'relative' },
-  posterPlaceholder: { fontSize: 80 },
+
   typeBadge: { position: 'absolute', top: Spacing.three, right: Spacing.three },
   section: { padding: Spacing.four, borderRadius: Spacing.four, gap: Spacing.two },
   sectionTitle: { textTransform: 'uppercase', letterSpacing: 1 },
@@ -261,5 +261,5 @@ const styles = StyleSheet.create({
   metaRow: { flexDirection: 'row', gap: Spacing.three, flexWrap: 'wrap', alignItems: 'center' },
   notesSection: { padding: Spacing.four, borderRadius: Spacing.four, gap: Spacing.two },
   actionRow: { flexDirection: 'row', gap: Spacing.three },
-  actionBtn: { flex: 1, paddingVertical: Spacing.three, borderRadius: Spacing.three, alignItems: 'center' },
+  actionBtn: { flex: 1, flexDirection: 'row', gap: Spacing.one, paddingVertical: Spacing.three, borderRadius: Spacing.three, alignItems: 'center', justifyContent: 'center' },
 });

@@ -26,9 +26,10 @@ export {
   Chip,
   Collapsible,
   Divider,
+  Icon,
   IconButton,
   Input,
   Modal,
   Screen,
 } from './ui';
-export type { ButtonProps, CardProps, ChipProps, IconButtonProps, InputProps, ModalProps } from './ui';
+export type { ButtonProps, CardProps, ChipProps, IconButtonProps, InputProps, ModalProps, IconName } from './ui';

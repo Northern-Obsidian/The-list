@@ -64,6 +64,7 @@ const styles = StyleSheet.create({
   sheet: {
     borderTopLeftRadius: Spacing.five,
     borderTopRightRadius: Spacing.five,
+    borderCurve: 'continuous',
     maxHeight: '85%',
     paddingBottom: Spacing.six,
   },

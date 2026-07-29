@@ -9,6 +9,7 @@ import { profiles as profilesSchema } from '@/db/schema';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { GlassCard } from '@/components/glass-card';
+import { Icon } from '@/components/ui/icon';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -424,7 +425,7 @@ export default function SettingsScreen() {
                 ]}
                 onPress={() => handleSwitchProfile(p.id)}
               >
-                <ThemedText style={styles.profileAvatar}>{p.avatar || '👤'}</ThemedText>
+                <Icon name={p.avatar || 'person.circle'} size={28} color={theme.text} />
                 <ThemedText style={styles.profileName}>{p.name}</ThemedText>
                 {p.isActive && <ThemedText type="small" style={{ color: theme.primary }}>Active</ThemedText>}
               </Pressable>

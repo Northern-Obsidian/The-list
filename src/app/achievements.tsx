@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Icon } from '@/components/ui/icon';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import {
@@ -91,7 +92,7 @@ export default function AchievementsScreen() {
               </ThemedText>
             </View>
           </View>
-          {isUnlocked && <ThemedText style={styles.unlockedBadge}>✅</ThemedText>}
+          {isUnlocked && <Icon name="checkmark" size={20} color={theme.success} />}
         </ThemedView>
       );
     },

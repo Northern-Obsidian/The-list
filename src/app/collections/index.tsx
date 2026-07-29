@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Icon } from '@/components/ui/icon';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { collections } from '@/db/schema';
@@ -28,7 +29,7 @@ export default function CollectionsScreen() {
       ]}
       onPress={() => router.push(`/collections/${item.id}`)}
     >
-      <ThemedText style={styles.collectionIcon}>{item.icon || '📁'}</ThemedText>
+      <Icon name={item.icon || 'folder'} size={32} color={theme.text} />
       <ThemedView style={styles.collectionInfo}>
         <ThemedText type="smallBold">{item.name}</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
@@ -36,7 +37,7 @@ export default function CollectionsScreen() {
           {item.isSmart ? ' · Smart' : ''}
         </ThemedText>
       </ThemedView>
-      <ThemedText type="link">→</ThemedText>
+      <Icon name="chevron.right" size={14} color={theme.text} />
     </Pressable>
   );
 
@@ -62,7 +63,7 @@ export default function CollectionsScreen() {
       }
       ListEmptyComponent={
         <ThemedView style={styles.emptyState}>
-          <ThemedText type="subtitle" style={styles.emptyIcon}>📁</ThemedText>
+          <Icon name="folder" size={64} color={theme.textSecondary} />
           <ThemedText themeColor="textSecondary">
             No collections yet. Create your first collection to organize your library.
           </ThemedText>

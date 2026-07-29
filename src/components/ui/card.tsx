@@ -3,7 +3,6 @@ import { Pressable, StyleSheet, type ViewProps } from 'react-native';
 
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
-import { Shadows } from '@/constants/shadows';
 import { useTheme } from '@/hooks/use-theme';
 
 export type CardProps = ViewProps & {
@@ -29,7 +28,7 @@ export function Card({
       style={[
         styles.base,
         { borderColor, backgroundColor: theme.card },
-        variant === 'elevated' && Shadows.md,
+        variant === 'elevated' && { boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' },
         variant === 'outlined' && styles.outlined,
         variant === 'flat' && styles.flat,
         style,
@@ -59,11 +58,12 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.four,
     padding: Spacing.four,
     borderWidth: 1,
+    borderCurve: 'continuous',
   },
   elevated: {},
   outlined: {},
   flat: {
-    elevation: 0,
+    boxShadow: 'none',
   },
   pressed: {
     opacity: 0.85,

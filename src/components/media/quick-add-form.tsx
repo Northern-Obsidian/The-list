@@ -3,6 +3,7 @@ import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
 import { Button } from '@/components/ui/button';
+import { Icon, iconForMediaType } from '@/components/ui/icon';
 import { Input } from '@/components/ui/input';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -14,12 +15,12 @@ import { generateId } from '@/utils/generate-id';
 import type { MediaType } from '@/types/media';
 import { HAS_SEASONS } from '@/types/media';
 
-const QUICK_TYPES: { key: MediaType; label: string; icon: string }[] = [
-  { key: 'movie', label: 'Movie', icon: '🎬' },
-  { key: 'anime', label: 'Anime', icon: '📖' },
-  { key: 'cartoon', label: 'Animation', icon: '🖍️' },
-  { key: 'tv_show', label: 'Series', icon: '📺' },
-  { key: 'drama', label: 'Drama', icon: '🎭' },
+const QUICK_TYPES: { key: MediaType; label: string }[] = [
+  { key: 'movie', label: 'Movie' },
+  { key: 'anime', label: 'Anime' },
+  { key: 'cartoon', label: 'Animation' },
+  { key: 'tv_show', label: 'Series' },
+  { key: 'drama', label: 'Drama' },
 ];
 
 export type QuickAddFormProps = {
@@ -188,7 +189,7 @@ export function QuickAddForm({ onSave, onCancel, onFullForm }: QuickAddFormProps
                     <View style={[styles.radioInner, { backgroundColor: theme.primary }]} />
                   )}
                 </View>
-                <ThemedText style={styles.radioIcon}>{t.icon}</ThemedText>
+                <Icon name={iconForMediaType(t.key)} size={18} color={theme.textSecondary} />
                 <ThemedText type="small">{t.label}</ThemedText>
               </Pressable>
             ))}
@@ -335,9 +336,6 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-  },
-  radioIcon: {
-    fontSize: 18,
   },
   imagePicker: {
     height: 160,

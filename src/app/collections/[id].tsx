@@ -6,6 +6,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MediaCard, type MediaCardItem } from '@/components/media/media-card';
+import { Icon } from '@/components/ui/icon';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -82,7 +83,7 @@ export default function CollectionDetailScreen() {
             </Pressable>
           </ThemedView>
           <ThemedView style={styles.collectionInfo}>
-            <ThemedText style={styles.collectionIcon}>{collection.icon || '📁'}</ThemedText>
+            <Icon name={collection.icon || 'folder'} size={48} color={theme.text} />
             <ThemedText type="subtitle">{collection.name}</ThemedText>
             {collection.description && (
               <ThemedText themeColor="textSecondary">{collection.description}</ThemedText>

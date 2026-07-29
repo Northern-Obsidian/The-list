@@ -53,8 +53,11 @@ export function Button({ variant = 'primary', children, style, disabled, onPress
 const styles = StyleSheet.create({
   base: {
     borderRadius: Spacing.three,
+    borderCurve: 'continuous',
   },
-  primary: {},
+  primary: {
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.12)',
+  },
   secondary: {
     borderWidth: 1,
     borderColor: 'rgba(128,128,128,0.3)',

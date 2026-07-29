@@ -3,7 +3,6 @@ import { GlassView } from 'expo-glass-effect';
 
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
-import { Shadows } from '@/constants/shadows';
 import { useTheme } from '@/hooks/use-theme';
 
 export type GlassCardProps = ViewProps & {
@@ -47,6 +46,7 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.four,
     padding: Spacing.four,
     borderWidth: Platform.OS === 'web' ? 1 : 0,
-    ...Shadows.sm,
+    borderCurve: 'continuous',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
   },
 });

@@ -7,24 +7,25 @@ import { MediaForm } from '@/components/media/media-form';
 import { QuickAddForm } from '@/components/media/quick-add-form';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Icon, iconForMediaType } from '@/components/ui/icon';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import type { MediaType } from '@/types/media';
 
-const MEDIA_TYPES: { key: MediaType; icon: string; label: string }[] = [
-  { key: 'movie', icon: '🎬', label: 'Movie' },
-  { key: 'tv_show', icon: '📺', label: 'TV Show' },
-  { key: 'anime', icon: '📖', label: 'Anime' },
-  { key: 'documentary', icon: '🎥', label: 'Documentary' },
-  { key: 'web_series', icon: '📹', label: 'Web Series' },
-  { key: 'mini_series', icon: '🎞️', label: 'Mini Series' },
-  { key: 'ova', icon: '💿', label: 'OVA' },
-  { key: 'cartoon', icon: '🖍️', label: 'Cartoon' },
-  { key: 'reality_show', icon: '📺', label: 'Reality' },
-  { key: 'podcast', icon: '🎙️', label: 'Podcast' },
-  { key: 'audiobook', icon: '🎧', label: 'Audiobook' },
-  { key: 'book', icon: '📕', label: 'Book' },
-  { key: 'game', icon: '🎮', label: 'Game' },
-  { key: 'drama', icon: '🎭', label: 'Drama' },
+const MEDIA_TYPES: { key: MediaType; label: string }[] = [
+  { key: 'movie', label: 'Movie' },
+  { key: 'tv_show', label: 'TV Show' },
+  { key: 'anime', label: 'Anime' },
+  { key: 'documentary', label: 'Documentary' },
+  { key: 'web_series', label: 'Web Series' },
+  { key: 'mini_series', label: 'Mini Series' },
+  { key: 'ova', label: 'OVA' },
+  { key: 'cartoon', label: 'Cartoon' },
+  { key: 'reality_show', label: 'Reality' },
+  { key: 'podcast', label: 'Podcast' },
+  { key: 'audiobook', label: 'Audiobook' },
+  { key: 'book', label: 'Book' },
+  { key: 'game', label: 'Game' },
+  { key: 'drama', label: 'Drama' },
 ];
 
 type Mode = 'picker' | 'quick' | 'full';
@@ -102,7 +103,7 @@ export default function NewMediaScreen() {
             ]}
             onPress={() => handleTypeSelect(type.key)}
           >
-            <ThemedText style={styles.typeIcon}>{type.icon}</ThemedText>
+             <Icon name={iconForMediaType(type.key)} size={36} color="currentColor" />
             <ThemedText type="small">{type.label}</ThemedText>
           </Pressable>
         ))}

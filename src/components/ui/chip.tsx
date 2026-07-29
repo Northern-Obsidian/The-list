@@ -30,12 +30,14 @@ export function Chip({ label, selected, onPress, color }: ChipProps) {
       accessibilityRole="button"
       accessibilityState={selected ? { selected: true } : undefined}
     >
-      <ThemedText
-        type="small"
-        style={[styles.label, { color: textColor }]}
-      >
-        {label}
-      </ThemedText>
+      {label ? (
+        <ThemedText
+          type="small"
+          style={[styles.label, { color: textColor }]}
+        >
+          {label}
+        </ThemedText>
+      ) : null}
     </Pressable>
   );
 }
@@ -45,6 +47,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.two,
     borderRadius: 20,
+    borderCurve: 'continuous',
   },
   label: {
     fontWeight: '500',

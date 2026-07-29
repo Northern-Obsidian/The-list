@@ -5,6 +5,7 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Icon, iconForMediaType } from '@/components/ui/icon';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useScalePress } from '@/utils/micro-interactions';
@@ -25,23 +26,6 @@ type Props = {
   variant?: 'grid' | 'list';
 };
 
-const TYPE_ICONS: Record<string, string> = {
-  movie: '🎬',
-  tv_show: '📺',
-  anime: '📖',
-  documentary: '🎥',
-  web_series: '📹',
-  mini_series: '🎞',
-  ova: '💿',
-  cartoon: '🖍️',
-  reality_show: '📺',
-  podcast: '🎙️',
-  audiobook: '🎧',
-  book: '📚',
-  game: '🎮',
-  drama: '🎭',
-};
-
 const STATUS_COLORS: Record<string, string> = {
   watching: '#3C9FFE',
   completed: '#34D399',
@@ -60,7 +44,7 @@ function MediaCardComponent({ item, variant = 'list' }: Props) {
   };
 
   const genres = item.genres ? (JSON.parse(item.genres) as string[]) : [];
-  const icon = TYPE_ICONS[item.mediaType] || '🎬';
+  const iconName = iconForMediaType(item.mediaType);
 
   if (variant === 'grid') {
     return (
@@ -78,7 +62,7 @@ function MediaCardComponent({ item, variant = 'list' }: Props) {
         accessibilityLabel={`${item.title}, ${item.mediaType.replace('_', ' ')}${item.year ? `, ${item.year}` : ''}`}
       >
         <ThemedView style={[styles.gridPoster, { backgroundColor: theme.background }]}>
-          <ThemedText style={styles.gridIcon}>{icon}</ThemedText>
+          <Icon name={iconName} size={40} color={theme.textSecondary} />
         </ThemedView>
         <ThemedView style={styles.gridInfo}>
           <ThemedText type="caption" numberOfLines={2} style={styles.gridTitle}>
@@ -91,7 +75,7 @@ function MediaCardComponent({ item, variant = 'list' }: Props) {
           )}
           {item.personalRating && (
             <ThemedText themeColor="textSecondary" type="caption">
-              ⭐ {item.personalRating}
+              {item.personalRating}
             </ThemedText>
           )}
         </ThemedView>
@@ -115,7 +99,7 @@ function MediaCardComponent({ item, variant = 'list' }: Props) {
       accessibilityLabel={`${item.title}, ${item.mediaType.replace('_', ' ')}, ${item.status.replace('_', ' ')}${item.year ? `, ${item.year}` : ''}`}
     >
       <ThemedView style={[styles.listPoster, { backgroundColor: theme.background }]}>
-        <ThemedText style={styles.listIcon}>{icon}</ThemedText>
+        <Icon name={iconName} size={24} color={theme.textSecondary} />
       </ThemedView>
       <ThemedView style={styles.listContent}>
         <ThemedText type="label" numberOfLines={1}>
@@ -132,7 +116,7 @@ function MediaCardComponent({ item, variant = 'list' }: Props) {
           )}
           {item.personalRating && (
             <ThemedText themeColor="textSecondary" type="caption">
-              · ⭐ {item.personalRating}
+              · {item.personalRating}
             </ThemedText>
           )}
         </ThemedView>
@@ -171,9 +155,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  listIcon: {
-    fontSize: 24,
-  },
   listContent: {
     flex: 1,
     gap: Spacing.half,
@@ -196,9 +177,6 @@ const styles = StyleSheet.create({
     height: 140,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  gridIcon: {
-    fontSize: 40,
   },
   gridInfo: {
     padding: Spacing.two,

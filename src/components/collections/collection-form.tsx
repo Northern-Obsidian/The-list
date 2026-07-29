@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
-import { Chip } from '@/components/ui/chip';
+import { Icon, COLLECTION_ICONS } from '@/components/ui/icon';
 import { Input } from '@/components/ui/input';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -22,7 +22,7 @@ const COLOR_OPTIONS = [
   '#A78BFA', '#F472B6', '#FB923C', '#2DD4BF',
 ];
 
-const ICON_OPTIONS = ['📁', '🎬', '📺', '📖', '🎮', '🎵', '⭐', '❤️'];
+
 
 export type CollectionFormProps = {
   initialData?: Partial<CollectionFormData> & { id?: string };
@@ -40,7 +40,7 @@ export function CollectionForm({ initialData, onSave, onCancel }: CollectionForm
     name: initialData?.name || '',
     description: initialData?.description || '',
     color: initialData?.color || COLOR_OPTIONS[0],
-    icon: initialData?.icon || ICON_OPTIONS[0],
+    icon: initialData?.icon || COLLECTION_ICONS[0],
     isSmart: initialData?.isSmart || false,
     smartRules: initialData?.smartRules || defaultSmartRules(),
   });
@@ -188,16 +188,18 @@ export function CollectionForm({ initialData, onSave, onCancel }: CollectionForm
           </ThemedText>
           <View style={styles.colorRow}>
             {COLOR_OPTIONS.map((c) => (
-              <View
+              <Pressable
                 key={c}
-                style={[styles.colorSwatch, { backgroundColor: c }]}
+                style={({ pressed }) => [
+                  styles.colorSwatch,
+                  { backgroundColor: c },
+                  form.color === c && styles.colorSwatchSelected,
+                  pressed && { opacity: 0.7 },
+                ]}
+                onPress={() => update('color', c)}
               >
-                <Chip
-                  label=""
-                  selected={form.color === c}
-                  onPress={() => update('color', c)}
-                />
-              </View>
+                {form.color === c && <Icon name="checkmark" size={16} color="#FFF" />}
+              </Pressable>
             ))}
           </View>
         </ThemedView>
@@ -207,13 +209,21 @@ export function CollectionForm({ initialData, onSave, onCancel }: CollectionForm
             Icon
           </ThemedText>
           <View style={styles.iconRow}>
-            {ICON_OPTIONS.map((ic) => (
-              <Chip
+            {COLLECTION_ICONS.map((ic) => (
+              <Pressable
                 key={ic}
-                label={ic}
-                selected={form.icon === ic}
+                style={({ pressed }) => [
+                  styles.iconOption,
+                  {
+                    backgroundColor: form.icon === ic ? theme.backgroundSelected : theme.backgroundElement,
+                    borderColor: form.icon === ic ? theme.primary : 'transparent',
+                  },
+                  pressed && { opacity: 0.7 },
+                ]}
                 onPress={() => update('icon', ic)}
-              />
+              >
+                <Icon name={ic} size={24} color={form.icon === ic ? theme.primary : theme.textSecondary} />
+              </Pressable>
             ))}
           </View>
         </ThemedView>
@@ -261,13 +271,28 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   colorSwatch: {
-    borderRadius: Spacing.one,
-    overflow: 'hidden',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  colorSwatchSelected: {
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
   iconRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.two,
+  },
+  iconOption: {
+    width: 44,
+    height: 44,
+    borderRadius: Spacing.two,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
   },
   actions: {
     flexDirection: 'row',

@@ -8,6 +8,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { GlassCard } from '@/components/glass-card';
 import { MediaCard, type MediaCardItem } from '@/components/media/media-card';
+import { Icon, iconForMediaType } from '@/components/ui/icon';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -63,6 +64,7 @@ export default function HomeScreen() {
     }
 
     setCollectionsList(getCollectionsWithCounts());
+    setLoading(false);
   }, []);
 
   return (
@@ -134,7 +136,7 @@ export default function HomeScreen() {
                   ]}
                   onPress={() => router.push(`/collections/${c.id}`)}
                 >
-                  <ThemedText style={styles.collectionCardIcon}>{c.icon || '📁'}</ThemedText>
+                  <Icon name={c.icon || 'folder'} size={28} color={theme.text} />
                   <ThemedText type="small" numberOfLines={1} style={styles.collectionCardName}>
                     {c.name}
                   </ThemedText>
@@ -165,9 +167,7 @@ export default function HomeScreen() {
                   ]}
                   onPress={() => router.push(`/media/${item.id}`)}
                 >
-                  <ThemedText style={styles.favoriteCardIcon}>
-                    {item.mediaType === 'movie' ? '🎬' : item.mediaType === 'tv_show' ? '📺' : '📖'}
-                  </ThemedText>
+                  <Icon name={iconForMediaType(item.mediaType)} size={24} color={theme.text} />
                   <ThemedText type="small" numberOfLines={1} style={styles.favoriteCardName}>
                     {item.title}
                   </ThemedText>
@@ -189,16 +189,16 @@ export default function HomeScreen() {
               }
             }}
           >
-            <ThemedText style={styles.randomPickerIcon}>🎲</ThemedText>
+            <Icon name="die.face.3" size={32} color={theme.primary} />
             <ThemedView style={styles.randomPickerInfo}>
-              <ThemedText type="smallBold" style={styles.randomPickerTitle}>
+              <ThemedText type="smallBold">
                 Pick for Me
               </ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
                 Surprise me with a random item
               </ThemedText>
             </ThemedView>
-            <ThemedText type="link">→</ThemedText>
+            <Icon name="chevron.right" size={14} color={theme.textSecondary} />
           </Pressable>
         </GlassCard>
 
@@ -218,9 +218,7 @@ export default function HomeScreen() {
                   ]}
                   onPress={() => router.push(`/media/${item.id}`)}
                 >
-                  <ThemedText style={styles.favoriteCardIcon}>
-                    {item.mediaType === 'movie' ? '🎬' : item.mediaType === 'tv_show' ? '📺' : '📖'}
-                  </ThemedText>
+                  <Icon name={iconForMediaType(item.mediaType)} size={24} color={theme.text} />
                   <ThemedText type="small" numberOfLines={1} style={styles.favoriteCardName}>
                     {item.title}
                   </ThemedText>
@@ -285,19 +283,22 @@ export default function HomeScreen() {
             style={({ pressed }) => [styles.quickLink, { backgroundColor: theme.backgroundElement }, pressed && { opacity: 0.7 }]}
             onPress={() => router.push('/media/new')}
           >
-            <ThemedText type="smallBold">➕ Add Media</ThemedText>
+            <Icon name="plus" size={14} color={theme.text} />
+            <ThemedText type="smallBold"> Add Media</ThemedText>
           </Pressable>
           <Pressable
             style={({ pressed }) => [styles.quickLink, { backgroundColor: theme.backgroundElement }, pressed && { opacity: 0.7 }]}
             onPress={() => router.push('/calendar')}
           >
-            <ThemedText type="smallBold">📅 Calendar</ThemedText>
+            <Icon name="calendar" size={14} color={theme.text} />
+            <ThemedText type="smallBold"> Calendar</ThemedText>
           </Pressable>
           <Pressable
             style={({ pressed }) => [styles.quickLink, { backgroundColor: theme.backgroundElement }, pressed && { opacity: 0.7 }]}
             onPress={() => router.push('/achievements')}
           >
-            <ThemedText type="smallBold">🏆 Achievements</ThemedText>
+            <Icon name="trophy" size={14} color={theme.text} />
+            <ThemedText type="smallBold"> Achievements</ThemedText>
           </Pressable>
         </ThemedView>
       </ThemedView>
@@ -325,7 +326,6 @@ const styles = StyleSheet.create({
   scrollContent: { flexDirection: 'row', justifyContent: 'center' },
   container: { flex: 1, paddingHorizontal: Spacing.four, maxWidth: MaxContentWidth, gap: Spacing.four, paddingBottom: Spacing.four },
   header: { gap: Spacing.half, paddingVertical: Spacing.three },
-  summaryCard: { borderRadius: Spacing.four, padding: Spacing.five, alignItems: 'center', gap: Spacing.one },
   summaryNumber: { fontSize: 56 },
   quickStats: { flexDirection: 'row', gap: Spacing.three },
   statCard: { flex: 1, borderRadius: Spacing.three, padding: Spacing.four, alignItems: 'center', gap: Spacing.half },
@@ -336,17 +336,13 @@ const styles = StyleSheet.create({
   seeAll: {},
   collectionsScroll: { marginHorizontal: -Spacing.four, paddingHorizontal: Spacing.four },
   collectionCard: { padding: Spacing.three, borderRadius: Spacing.three, gap: Spacing.one, alignItems: 'center', minWidth: 100, marginRight: Spacing.two },
-  collectionCardIcon: { fontSize: 28 },
   collectionCardName: { maxWidth: 80 },
   favoritesScroll: { marginHorizontal: -Spacing.four, paddingHorizontal: Spacing.four },
   favoriteCard: { padding: Spacing.three, borderRadius: Spacing.three, gap: Spacing.one, alignItems: 'center', minWidth: 90, marginRight: Spacing.two },
-  favoriteCardIcon: { fontSize: 24 },
   favoriteCardName: { maxWidth: 80, textAlign: 'center' },
   randomPickerCard: { borderRadius: Spacing.four, overflow: 'hidden' },
   randomPickerContent: { flexDirection: 'row', alignItems: 'center', padding: Spacing.four, gap: Spacing.three },
-  randomPickerIcon: { fontSize: 32 },
   randomPickerInfo: { flex: 1, gap: Spacing.half },
-  randomPickerTitle: { textTransform: 'uppercase', letterSpacing: 1 },
   emptyState: { paddingVertical: Spacing.five, alignItems: 'center' },
   itemList: { gap: Spacing.two },
   quickLinks: { flexDirection: 'row', gap: Spacing.three, flexWrap: 'wrap' },

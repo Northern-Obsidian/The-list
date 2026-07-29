@@ -7,6 +7,7 @@ import {
   View,
 } from 'react-native';
 
+import { Icon } from '@/components/ui/icon';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -75,7 +76,7 @@ export function Input({
             style={styles.clearButton}
             onPress={() => onChangeText('')}
           >
-            <ThemedText themeColor="textSecondary">✕</ThemedText>
+            <Icon name="xmark" size={16} color={theme.textSecondary} />
           </Pressable>
         )}
       </View>
@@ -108,6 +109,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: Spacing.three,
+    borderCurve: 'continuous',
     borderWidth: 2,
     paddingHorizontal: Spacing.four,
   },

@@ -7,6 +7,7 @@ import { eq } from 'drizzle-orm';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Button } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icon';
 import { Modal } from '@/components/ui/modal';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -162,13 +163,13 @@ export default function CalendarScreen() {
 
         <ThemedView style={styles.navigation}>
           <Pressable onPress={() => navigateMonth(-1)} style={styles.navButton}>
-            <ThemedText type="link">←</ThemedText>
+            <Icon name="chevron.left" size={20} color={theme.text} />
           </Pressable>
           <ThemedText type="subtitle" style={styles.monthTitle}>
             {MONTHS[month]} {year}
           </ThemedText>
           <Pressable onPress={() => navigateMonth(1)} style={styles.navButton}>
-            <ThemedText type="link">→</ThemedText>
+            <Icon name="chevron.right" size={20} color={theme.text} />
           </Pressable>
         </ThemedView>
 
