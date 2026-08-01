@@ -54,6 +54,16 @@ const STREAK_REMINDER_KEY = 'pref_streak_reminder';
 const BACKUP_REMINDER_KEY = 'pref_backup_reminder';
 const RELEASE_REMINDER_KEY = 'pref_release_reminder';
 const DARK_MODE_KEY = 'pref_dark_mode';
+const AUTO_PLAY_KEY = 'pref_auto_play';
+const SKIP_INTROS_KEY = 'pref_skip_intros';
+const PLAYBACK_QUALITY_KEY = 'pref_playback_quality';
+const LANGUAGE_KEY = 'pref_language';
+const DEFAULT_LIST_VIEW_KEY = 'pref_default_list_view';
+const SHOW_RATINGS_KEY = 'pref_show_ratings';
+const COMPACT_MODE_KEY = 'pref_compact_mode';
+const HAPTIC_FEEDBACK_KEY = 'pref_haptic_feedback';
+const AUTO_BACKUP_KEY = 'pref_auto_backup';
+const CACHE_SIZE_KEY = 'pref_cache_size';
 
 export type ThemeMode = 'system' | 'light' | 'dark' | 'amoled' | 'glass' | 'cyberpunk' | 'neon' | 'minimal';
 
@@ -216,5 +226,139 @@ export function useSetDarkModeOverride(): (_value: boolean | null) => void {
     } else {
       preferenceStore.set(DARK_MODE_KEY, value ? 'dark' : 'light');
     }
+  }, []);
+}
+
+// General Settings
+export function useDefaultListView(): string {
+  return useSyncExternalStore(
+    subscribe(preferenceStore),
+    getSnapshot(preferenceStore, DEFAULT_LIST_VIEW_KEY, 'grid'),
+  );
+}
+
+export function useSetDefaultListView(): (_view: string) => void {
+  return useCallback((view: string) => {
+    preferenceStore.set(DEFAULT_LIST_VIEW_KEY, view);
+  }, []);
+}
+
+export function useShowRatings(): boolean {
+  return useSyncExternalStore(
+    subscribe(preferenceStore),
+    getBoolSnapshot(preferenceStore, SHOW_RATINGS_KEY, true),
+  );
+}
+
+export function useSetShowRatings(): (_enabled: boolean) => void {
+  return useCallback((enabled: boolean) => {
+    preferenceStore.setBoolean(SHOW_RATINGS_KEY, enabled);
+  }, []);
+}
+
+export function useCompactMode(): boolean {
+  return useSyncExternalStore(
+    subscribe(preferenceStore),
+    getBoolSnapshot(preferenceStore, COMPACT_MODE_KEY, false),
+  );
+}
+
+export function useSetCompactMode(): (_enabled: boolean) => void {
+  return useCallback((enabled: boolean) => {
+    preferenceStore.setBoolean(COMPACT_MODE_KEY, enabled);
+  }, []);
+}
+
+export function useHapticFeedback(): boolean {
+  return useSyncExternalStore(
+    subscribe(preferenceStore),
+    getBoolSnapshot(preferenceStore, HAPTIC_FEEDBACK_KEY, true),
+  );
+}
+
+export function useSetHapticFeedback(): (_enabled: boolean) => void {
+  return useCallback((enabled: boolean) => {
+    preferenceStore.setBoolean(HAPTIC_FEEDBACK_KEY, enabled);
+  }, []);
+}
+
+// Playback Settings
+export function useAutoPlay(): boolean {
+  return useSyncExternalStore(
+    subscribe(preferenceStore),
+    getBoolSnapshot(preferenceStore, AUTO_PLAY_KEY, true),
+  );
+}
+
+export function useSetAutoPlay(): (_enabled: boolean) => void {
+  return useCallback((enabled: boolean) => {
+    preferenceStore.setBoolean(AUTO_PLAY_KEY, enabled);
+  }, []);
+}
+
+export function useSkipIntros(): boolean {
+  return useSyncExternalStore(
+    subscribe(preferenceStore),
+    getBoolSnapshot(preferenceStore, SKIP_INTROS_KEY, false),
+  );
+}
+
+export function useSetSkipIntros(): (_enabled: boolean) => void {
+  return useCallback((enabled: boolean) => {
+    preferenceStore.setBoolean(SKIP_INTROS_KEY, enabled);
+  }, []);
+}
+
+export function usePlaybackQuality(): string {
+  return useSyncExternalStore(
+    subscribe(preferenceStore),
+    getSnapshot(preferenceStore, PLAYBACK_QUALITY_KEY, 'auto'),
+  );
+}
+
+export function useSetPlaybackQuality(): (_quality: string) => void {
+  return useCallback((quality: string) => {
+    preferenceStore.set(PLAYBACK_QUALITY_KEY, quality);
+  }, []);
+}
+
+// Language Settings
+export function useLanguage(): string {
+  return useSyncExternalStore(
+    subscribe(preferenceStore),
+    getSnapshot(preferenceStore, LANGUAGE_KEY, 'en'),
+  );
+}
+
+export function useSetLanguage(): (_lang: string) => void {
+  return useCallback((lang: string) => {
+    preferenceStore.set(LANGUAGE_KEY, lang);
+  }, []);
+}
+
+// Data Settings
+export function useAutoBackup(): boolean {
+  return useSyncExternalStore(
+    subscribe(preferenceStore),
+    getBoolSnapshot(preferenceStore, AUTO_BACKUP_KEY, false),
+  );
+}
+
+export function useSetAutoBackup(): (_enabled: boolean) => void {
+  return useCallback((enabled: boolean) => {
+    preferenceStore.setBoolean(AUTO_BACKUP_KEY, enabled);
+  }, []);
+}
+
+export function useCacheSize(): string {
+  return useSyncExternalStore(
+    subscribe(preferenceStore),
+    getSnapshot(preferenceStore, CACHE_SIZE_KEY, '100'),
+  );
+}
+
+export function useSetCacheSize(): (_size: string) => void {
+  return useCallback((size: string) => {
+    preferenceStore.set(CACHE_SIZE_KEY, size);
   }, []);
 }

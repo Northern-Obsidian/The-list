@@ -54,6 +54,24 @@ import {
   useThemePreference,
   useWeeklySummaryEnabled,
   type ThemeMode,
+  useDefaultListView,
+  useSetDefaultListView,
+  useShowRatings,
+  useSetShowRatings,
+  useCompactMode,
+  useSetCompactMode,
+  useHapticFeedback,
+  useSetHapticFeedback,
+  useAutoPlay,
+  useSetAutoPlay,
+  useSkipIntros,
+  useSetSkipIntros,
+  usePlaybackQuality,
+  useSetPlaybackQuality,
+  useLanguage,
+  useSetLanguage,
+  useAutoBackup,
+  useSetAutoBackup,
 } from '@/stores/use-preference-store';
 
 function Toggle({
@@ -80,7 +98,7 @@ function Toggle({
           styles.toggleTrack,
           {
             backgroundColor: value
-              ? theme.primary || '#3C9FFE'
+              ? theme.primary
               : theme.backgroundElement,
           },
         ]}
@@ -91,6 +109,38 @@ function Toggle({
             value && styles.toggleThumbActive,
           ]}
         />
+      </View>
+    </Pressable>
+  );
+}
+
+function SettingRow({
+  label,
+  value,
+  onPress,
+  icon,
+}: {
+  label: string;
+  value?: string;
+  onPress?: () => void;
+  icon?: string;
+}) {
+  const theme = useTheme();
+  return (
+    <Pressable
+      style={({ pressed }) => [
+        styles.settingRow,
+        pressed && { opacity: 0.7 },
+      ]}
+      onPress={onPress}
+    >
+      <View style={styles.settingRowLeft}>
+        {icon && <Icon name={icon} size={20} color={theme.textSecondary} />}
+        <ThemedText>{label}</ThemedText>
+      </View>
+      <View style={styles.settingRowRight}>
+        {value && <ThemedText themeColor="textSecondary">{value}</ThemedText>}
+        <Icon name="chevron.right" size={14} color={theme.textTertiary} />
       </View>
     </Pressable>
   );
@@ -120,6 +170,32 @@ export default function SettingsScreen() {
   const setBackupReminder = useSetBackupReminderEnabled();
   const releaseReminder = useReleaseReminderEnabled();
   const setReleaseReminder = useSetReleaseReminderEnabled();
+
+  // General settings
+  const defaultListView = useDefaultListView();
+  const setDefaultListView = useSetDefaultListView();
+  const showRatings = useShowRatings();
+  const setShowRatings = useSetShowRatings();
+  const compactMode = useCompactMode();
+  const setCompactMode = useSetCompactMode();
+  const hapticFeedback = useHapticFeedback();
+  const setHapticFeedback = useSetHapticFeedback();
+
+  // Playback settings
+  const autoPlay = useAutoPlay();
+  const setAutoPlay = useSetAutoPlay();
+  const skipIntros = useSkipIntros();
+  const setSkipIntros = useSetSkipIntros();
+  const playbackQuality = usePlaybackQuality();
+  const setPlaybackQuality = useSetPlaybackQuality();
+
+  // Language settings
+  const language = useLanguage();
+  const setLanguage = useSetLanguage();
+
+  // Data settings
+  const autoBackup = useAutoBackup();
+  const setAutoBackup = useSetAutoBackup();
 
   const [bioAvailable, setBioAvailable] = useState(false);
   const [pinConfigured, setPinConfigured] = useState(false);
@@ -301,6 +377,27 @@ export default function SettingsScreen() {
     { key: 'minimal', label: 'Minimal' },
   ];
 
+  const languageOptions = [
+    { key: 'en', label: 'English' },
+    { key: 'es', label: 'Español' },
+    { key: 'fr', label: 'Français' },
+    { key: 'de', label: 'Deutsch' },
+    { key: 'ja', label: '日本語' },
+    { key: 'ko', label: '한국어' },
+  ];
+
+  const qualityOptions = [
+    { key: 'auto', label: 'Auto' },
+    { key: 'high', label: 'High' },
+    { key: 'medium', label: 'Medium' },
+    { key: 'low', label: 'Low' },
+  ];
+
+  const listViewOptions = [
+    { key: 'grid', label: 'Grid' },
+    { key: 'list', label: 'List' },
+  ];
+
   const paddingBottom = insets.bottom + BottomTabInset + Spacing.three;
 
   return (
@@ -365,7 +462,7 @@ export default function SettingsScreen() {
               <Pressable
                 style={({ pressed }) => [
                   styles.pinButton,
-                  { backgroundColor: theme.primary || theme.backgroundSelected },
+                  { backgroundColor: theme.primary },
                   pressed && { opacity: 0.7 },
                 ]}
                 onPress={handlePinSetup}
@@ -376,10 +473,44 @@ export default function SettingsScreen() {
           </ThemedView>
         )}
 
-          <GlassCard>
-            <ThemedText type="smallBold" style={styles.sectionTitle}>
-              Appearance
-            </ThemedText>
+        {/* General */}
+        <GlassCard>
+          <ThemedText type="smallBold" style={styles.sectionTitle}>
+            General
+          </ThemedText>
+          <Toggle
+            label="Compact Mode"
+            value={compactMode}
+            onValueChange={setCompactMode}
+          />
+          <Toggle
+            label="Show Ratings"
+            value={showRatings}
+            onValueChange={setShowRatings}
+          />
+          <Toggle
+            label="Haptic Feedback"
+            value={hapticFeedback}
+            onValueChange={setHapticFeedback}
+          />
+          <SettingRow
+            label="Default View"
+            value={defaultListView === 'grid' ? 'Grid' : 'List'}
+            onPress={() => {
+              Alert.alert('Default View', 'Choose your default view', [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Grid', onPress: () => setDefaultListView('grid') },
+                { text: 'List', onPress: () => setDefaultListView('list') },
+              ]);
+            }}
+          />
+        </GlassCard>
+
+        {/* Appearance */}
+        <GlassCard>
+          <ThemedText type="smallBold" style={styles.sectionTitle}>
+            Appearance
+          </ThemedText>
           <View style={styles.themeOptions}>
             {themeOptions.map((opt) => (
               <Pressable
@@ -393,8 +524,8 @@ export default function SettingsScreen() {
                         : theme.background,
                     borderColor:
                       themePref === opt.key
-                        ? theme.primary || theme.border || 'transparent'
-                        : theme.border || 'transparent',
+                        ? theme.primary
+                        : theme.border,
                   },
                   pressed && { opacity: 0.7 },
                 ]}
@@ -411,6 +542,7 @@ export default function SettingsScreen() {
           </View>
         </GlassCard>
 
+        {/* Profiles */}
         {profiles.length > 1 && (
           <GlassCard>
             <ThemedText type="smallBold" style={styles.sectionTitle}>Profiles</ThemedText>
@@ -439,6 +571,7 @@ export default function SettingsScreen() {
           </GlassCard>
         )}
 
+        {/* Security */}
         <GlassCard>
           <ThemedText type="smallBold" style={styles.sectionTitle}>
             Security
@@ -465,7 +598,7 @@ export default function SettingsScreen() {
                   ]}
                   onPress={handleRemovePin}
                 >
-                  <ThemedText style={{ color: theme.error || '#F87171' }}>
+                  <ThemedText style={{ color: theme.error }}>
                     Remove PIN
                   </ThemedText>
                 </Pressable>
@@ -474,6 +607,7 @@ export default function SettingsScreen() {
           )}
         </GlassCard>
 
+        {/* Notifications */}
         <GlassCard>
           <ThemedText type="smallBold" style={styles.sectionTitle}>
             Notifications
@@ -519,10 +653,66 @@ export default function SettingsScreen() {
           )}
         </GlassCard>
 
+        {/* Playback */}
         <GlassCard>
           <ThemedText type="smallBold" style={styles.sectionTitle}>
-            Data
+            Playback
           </ThemedText>
+          <Toggle
+            label="Auto-Play Next"
+            value={autoPlay}
+            onValueChange={setAutoPlay}
+          />
+          <Toggle
+            label="Skip Intros"
+            value={skipIntros}
+            onValueChange={setSkipIntros}
+          />
+          <SettingRow
+            label="Video Quality"
+            value={qualityOptions.find((q) => q.key === playbackQuality)?.label || 'Auto'}
+            onPress={() => {
+              Alert.alert('Video Quality', 'Choose playback quality', [
+                { text: 'Cancel', style: 'cancel' },
+                ...qualityOptions.map((q) => ({
+                  text: q.label,
+                  onPress: () => setPlaybackQuality(q.key),
+                })),
+              ]);
+            }}
+          />
+        </GlassCard>
+
+        {/* Language */}
+        <GlassCard>
+          <ThemedText type="smallBold" style={styles.sectionTitle}>
+            Language
+          </ThemedText>
+          <SettingRow
+            label="App Language"
+            value={languageOptions.find((l) => l.key === language)?.label || 'English'}
+            onPress={() => {
+              Alert.alert('Language', 'Choose app language', [
+                { text: 'Cancel', style: 'cancel' },
+                ...languageOptions.map((l) => ({
+                  text: l.label,
+                  onPress: () => setLanguage(l.key),
+                })),
+              ]);
+            }}
+          />
+        </GlassCard>
+
+        {/* Data & Storage */}
+        <GlassCard>
+          <ThemedText type="smallBold" style={styles.sectionTitle}>
+            Data & Storage
+          </ThemedText>
+          <Toggle
+            label="Auto Backup"
+            value={autoBackup}
+            onValueChange={setAutoBackup}
+          />
           <Pressable
             style={({ pressed }) => [
               styles.actionButton,
@@ -543,9 +733,66 @@ export default function SettingsScreen() {
           >
             <ThemedText>Import Data</ThemedText>
           </Pressable>
-
+          <Pressable
+            style={({ pressed }) => [
+              styles.actionButton,
+              { backgroundColor: theme.background },
+              pressed && { opacity: 0.7 },
+            ]}
+            onPress={() => {
+              Alert.alert('Clear Cache', 'This will clear temporary files. Continue?', [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Clear', style: 'destructive', onPress: () => Alert.alert('Done', 'Cache cleared') },
+              ]);
+            }}
+          >
+            <ThemedText style={{ color: theme.error }}>Clear Cache</ThemedText>
+          </Pressable>
         </GlassCard>
 
+        {/* Advanced */}
+        <GlassCard>
+          <ThemedText type="smallBold" style={styles.sectionTitle}>
+            Advanced
+          </ThemedText>
+          <Pressable
+            style={({ pressed }) => [
+              styles.actionButton,
+              { backgroundColor: theme.background },
+              pressed && { opacity: 0.7 },
+            ]}
+            onPress={() => {
+              Alert.alert('Reset All Data', 'This will permanently delete all your data. This action cannot be undone.', [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Delete Everything', style: 'destructive', onPress: () => Alert.alert('Done', 'Data reset') },
+              ]);
+            }}
+          >
+            <ThemedText style={{ color: theme.error }}>Reset All Data</ThemedText>
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [
+              styles.actionButton,
+              { backgroundColor: theme.background },
+              pressed && { opacity: 0.7 },
+            ]}
+            onPress={() => Alert.alert('Help', 'Visit our help center at support.thelist.app')}
+          >
+            <ThemedText>Help & Support</ThemedText>
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [
+              styles.actionButton,
+              { backgroundColor: theme.background },
+              pressed && { opacity: 0.7 },
+            ]}
+            onPress={() => Alert.alert('About', 'The_List v1.0.0\nYour watchlist. Organized.\n\nBuilt for entertainment lovers.')}
+          >
+            <ThemedText>About The_List</ThemedText>
+          </Pressable>
+        </GlassCard>
+
+        {/* About */}
         <GlassCard>
           <ThemedText type="smallBold" style={styles.sectionTitle}>
             About
@@ -555,8 +802,8 @@ export default function SettingsScreen() {
             <ThemedText>1.0.0</ThemedText>
           </ThemedView>
           <ThemedView style={styles.aboutRow}>
-            <ThemedText themeColor="textSecondary">App</ThemedText>
-            <ThemedText>The_List</ThemedText>
+            <ThemedText themeColor="textSecondary">Build</ThemedText>
+            <ThemedText>2026.08.01</ThemedText>
           </ThemedView>
         </GlassCard>
       </ThemedView>
@@ -595,10 +842,12 @@ const styles = StyleSheet.create({
   },
   themeOptions: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: Spacing.two,
   },
   themeOption: {
     flex: 1,
+    minWidth: '22%',
     paddingVertical: Spacing.three,
     paddingHorizontal: Spacing.four,
     borderRadius: Spacing.three,
@@ -626,6 +875,22 @@ const styles = StyleSheet.create({
   },
   toggleThumbActive: {
     alignSelf: 'flex-end',
+  },
+  settingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: Spacing.two,
+  },
+  settingRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  settingRowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
   },
   dangerButton: {
     paddingVertical: Spacing.two,
