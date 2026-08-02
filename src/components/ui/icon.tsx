@@ -113,7 +113,7 @@ type IconProps = {
   size?: number;
   weight?: SymbolViewProps['weight'];
   color?: string;
-  style?: Record<string, any>;
+  style?: Record<string, unknown>;
 };
 
 export function Icon({ name, size = 24, weight, color, style }: IconProps) {
@@ -126,9 +126,9 @@ export function Icon({ name, size = 24, weight, color, style }: IconProps) {
       <SymbolView
         name={name as SymbolViewProps['name']}
         size={size}
-        weight={weight ?? 'regular' as any}
+        weight={weight ?? ('regular' as SymbolViewProps['weight'])}
         tintColor={color}
-        style={style as any}
+        style={style as SymbolViewProps['style']}
       />
     );
   }

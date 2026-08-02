@@ -59,8 +59,8 @@ export async function uploadBackupToDrive(
   try {
     const metadata = JSON.stringify({ name: fileName, mimeType: 'application/json' });
     const formData = new FormData();
-    formData.append('metadata', { uri: `data:application/json;base64,${btoa(metadata)}`, type: 'application/json', name: 'metadata.json' } as any);
-    formData.append('file', { uri: `data:application/json;base64,${btoa(jsonContent)}`, type: 'application/json', name: fileName } as any);
+    formData.append('metadata', { uri: `data:application/json;base64,${btoa(metadata)}`, type: 'application/json', name: 'metadata.json' } as FormDataFile);
+    formData.append('file', { uri: `data:application/json;base64,${btoa(jsonContent)}`, type: 'application/json', name: fileName } as FormDataFile);
 
     const res = await fetchWithAuth(DRIVE_UPLOAD_URL, accessToken, { method: 'POST', body: formData });
     const data = await res.json();

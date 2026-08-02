@@ -393,11 +393,6 @@ export default function SettingsScreen() {
     { key: 'low', label: 'Low' },
   ];
 
-  const listViewOptions = [
-    { key: 'grid', label: 'Grid' },
-    { key: 'list', label: 'List' },
-  ];
-
   const paddingBottom = insets.bottom + BottomTabInset + Spacing.three;
 
   return (

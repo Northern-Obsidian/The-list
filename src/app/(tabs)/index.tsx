@@ -16,7 +16,7 @@ import { getDatabase } from '@/db';
 import { media, watchHistory } from '@/db/schema';
 import { pickRandom } from '@/services/random-picker';
 import { getInProgress, getFavorites, getCollectionsWithCounts, getMediaCounts } from '@/db/queries';
-import { getRecommendations, getTopRated, getUnwatchedRecommendations } from '@/services/recommendation-engine';
+
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function HomeScreen() {
@@ -32,8 +32,7 @@ export default function HomeScreen() {
   const [recentItems, setRecentItems] = useState<MediaCardItem[]>([]);
   const [favoriteItems, setFavoriteItems] = useState<MediaCardItem[]>([]);
   const [collectionsList, setCollectionsList] = useState<{ id: string; name: string; icon: string | null; color: string | null; itemCount: number }[]>([]);
-  const [recommendations, setRecommendations] = useState<MediaCardItem[]>([]);
-  const [topRated, setTopRated] = useState<MediaCardItem[]>([]);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -201,45 +200,6 @@ export default function HomeScreen() {
             <Icon name="chevron.right" size={14} color={theme.textSecondary} />
           </Pressable>
         </GlassCard>
-
-        {recommendations.length > 0 && (
-          <GlassCard>
-            <ThemedText type="smallBold" style={styles.sectionTitle}>
-              Recommended for You
-            </ThemedText>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.favoritesScroll}>
-              {recommendations.map((item) => (
-                <Pressable
-                  key={item.id}
-                  style={({ pressed }) => [
-                    styles.favoriteCard,
-                    { backgroundColor: theme.background },
-                    pressed && { opacity: 0.7 },
-                  ]}
-                  onPress={() => router.push(`/media/${item.id}`)}
-                >
-                  <Icon name={iconForMediaType(item.mediaType)} size={24} color={theme.text} />
-                  <ThemedText type="small" numberOfLines={1} style={styles.favoriteCardName}>
-                    {item.title}
-                  </ThemedText>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </GlassCard>
-        )}
-
-        {topRated.length > 0 && (
-          <GlassCard>
-            <ThemedText type="smallBold" style={styles.sectionTitle}>
-              Top Rated
-            </ThemedText>
-            <View style={styles.itemList}>
-              {topRated.slice(0, 5).map((item) => (
-                <MediaCard key={item.id} item={item} variant="list" />
-              ))}
-            </View>
-          </GlassCard>
-        )}
 
         <GlassCard>
           <ThemedText type="smallBold" style={styles.sectionTitle}>
