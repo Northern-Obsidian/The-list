@@ -5,7 +5,30 @@ import { router } from 'expo-router';
 import { eq } from 'drizzle-orm';
 import { getDatabase, setActiveProfileId } from '@/db';
 import { profiles as profilesSchema } from '@/db/schema';
-
+import {
+  IconLayoutGrid,
+  IconEye,
+  IconBell,
+  IconLock,
+  IconFingerprint,
+  IconPlayerPlay,
+  IconPlayerSkipForward,
+  IconMovie,
+  IconWorld,
+  IconDatabase,
+  IconDownload,
+  IconUpload,
+  IconTrash,
+  IconHelp,
+  IconInfoCircle,
+  IconRefresh,
+  IconCalendar,
+  IconAward,
+  IconTrendingUp,
+  IconUser,
+  IconChevronRight,
+  IconSettings2,
+} from '@tabler/icons-react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { GlassCard } from '@/components/glass-card';
@@ -78,37 +101,30 @@ function Toggle({
   value,
   onValueChange,
   label,
+  icon: IconComp,
 }: {
   value: boolean;
   onValueChange: (_v: boolean) => void;
   label: string;
+  icon?: React.ComponentType<{ size: number; color: string }>;
 }) {
   const theme = useTheme();
   return (
     <Pressable
-      style={({ pressed }) => [
-        styles.toggleRow,
-        pressed && { opacity: 0.7 },
-      ]}
+      style={({ pressed }) => [styles.toggleRow, pressed && { opacity: 0.7 }]}
       onPress={() => onValueChange(!value)}
     >
-      <ThemedText>{label}</ThemedText>
+      <View style={styles.toggleLeft}>
+        {IconComp && <IconComp size={18} color={theme.textSecondary} />}
+        <ThemedText type="small">{label}</ThemedText>
+      </View>
       <View
         style={[
           styles.toggleTrack,
-          {
-            backgroundColor: value
-              ? theme.primary
-              : theme.backgroundElement,
-          },
+          { backgroundColor: value ? theme.primary : theme.backgroundElement },
         ]}
       >
-        <View
-          style={[
-            styles.toggleThumb,
-            value && styles.toggleThumbActive,
-          ]}
-        />
+        <View style={[styles.toggleThumb, value && styles.toggleThumbActive]} />
       </View>
     </Pressable>
   );
@@ -118,30 +134,52 @@ function SettingRow({
   label,
   value,
   onPress,
-  icon,
+  icon: IconComp,
 }: {
   label: string;
   value?: string;
   onPress?: () => void;
-  icon?: string;
+  icon?: React.ComponentType<{ size: number; color: string }>;
 }) {
   const theme = useTheme();
   return (
     <Pressable
-      style={({ pressed }) => [
-        styles.settingRow,
-        pressed && { opacity: 0.7 },
-      ]}
+      style={({ pressed }) => [styles.settingRow, pressed && { opacity: 0.7 }]}
       onPress={onPress}
     >
-      <View style={styles.settingRowLeft}>
-        {icon && <Icon name={icon} size={20} color={theme.textSecondary} />}
-        <ThemedText>{label}</ThemedText>
+      <View style={styles.settingLeft}>
+        {IconComp && <IconComp size={18} color={theme.textSecondary} />}
+        <ThemedText type="small">{label}</ThemedText>
       </View>
-      <View style={styles.settingRowRight}>
-        {value && <ThemedText themeColor="textSecondary">{value}</ThemedText>}
-        <Icon name="chevron.right" size={14} color={theme.textTertiary} />
+      <View style={styles.settingRight}>
+        {value && <ThemedText type="small" themeColor="textSecondary">{value}</ThemedText>}
+        <IconChevronRight size={14} color={theme.textTertiary} />
       </View>
+    </Pressable>
+  );
+}
+
+function ActionRow({
+  label,
+  onPress,
+  icon: IconComp,
+  danger,
+}: {
+  label: string;
+  onPress: () => void;
+  icon?: React.ComponentType<{ size: number; color: string }>;
+  danger?: boolean;
+}) {
+  const theme = useTheme();
+  return (
+    <Pressable
+      style={({ pressed }) => [styles.actionRow, pressed && { opacity: 0.7 }]}
+      onPress={onPress}
+    >
+      {IconComp && <IconComp size={16} color={danger ? theme.error : theme.textSecondary} />}
+      <ThemedText type="small" style={{ color: danger ? theme.error : theme.text }}>
+        {label}
+      </ThemedText>
     </Pressable>
   );
 }
@@ -170,8 +208,6 @@ export default function SettingsScreen() {
   const setBackupReminder = useSetBackupReminderEnabled();
   const releaseReminder = useReleaseReminderEnabled();
   const setReleaseReminder = useSetReleaseReminderEnabled();
-
-  // General settings
   const defaultListView = useDefaultListView();
   const setDefaultListView = useSetDefaultListView();
   const showRatings = useShowRatings();
@@ -180,20 +216,14 @@ export default function SettingsScreen() {
   const setCompactMode = useSetCompactMode();
   const hapticFeedback = useHapticFeedback();
   const setHapticFeedback = useSetHapticFeedback();
-
-  // Playback settings
   const autoPlay = useAutoPlay();
   const setAutoPlay = useSetAutoPlay();
   const skipIntros = useSkipIntros();
   const setSkipIntros = useSetSkipIntros();
   const playbackQuality = usePlaybackQuality();
   const setPlaybackQuality = useSetPlaybackQuality();
-
-  // Language settings
   const language = useLanguage();
   const setLanguage = useSetLanguage();
-
-  // Data settings
   const autoBackup = useAutoBackup();
   const setAutoBackup = useSetAutoBackup();
 
@@ -366,30 +396,30 @@ export default function SettingsScreen() {
     setProfiles((prev) => prev.map((p) => ({ ...p, isActive: p.id === profileId })));
   }, []);
 
-  const themeOptions: { key: ThemeMode; label: string }[] = [
-    { key: 'system', label: 'System' },
-    { key: 'dark', label: 'Dark' },
-    { key: 'light', label: 'Light' },
-    { key: 'amoled', label: 'AMOLED' },
-    { key: 'glass', label: 'Glass' },
-    { key: 'cyberpunk', label: 'Cyberpunk' },
-    { key: 'neon', label: 'Neon' },
-    { key: 'minimal', label: 'Minimal' },
+  const themeOptions: { key: ThemeMode; colors: string[] }[] = [
+    { key: 'system', colors: ['#888888', '#CCCCCC'] },
+    { key: 'dark', colors: ['#1E1E1E', '#2A2A2A'] },
+    { key: 'light', colors: ['#F5F5F7', '#FFFFFF'] },
+    { key: 'amoled', colors: ['#000000', '#111111'] },
+    { key: 'glass', colors: ['rgba(120,120,180,0.4)', 'rgba(200,200,255,0.2)'] },
+    { key: 'cyberpunk', colors: ['#ff00ff', '#1a0033'] },
+    { key: 'neon', colors: ['#00ffff', '#003333'] },
+    { key: 'minimal', colors: ['#333333', '#666666'] },
   ];
 
   const languageOptions = [
-    { key: 'en', label: 'English' },
-    { key: 'es', label: 'Español' },
-    { key: 'fr', label: 'Français' },
-    { key: 'de', label: 'Deutsch' },
-    { key: 'ja', label: '日本語' },
-    { key: 'ko', label: '한국어' },
+    { key: 'en', label: 'EN' },
+    { key: 'es', label: 'ES' },
+    { key: 'fr', label: 'FR' },
+    { key: 'de', label: 'DE' },
+    { key: 'ja', label: 'JA' },
+    { key: 'ko', label: 'KO' },
   ];
 
   const qualityOptions = [
     { key: 'auto', label: 'Auto' },
     { key: 'high', label: 'High' },
-    { key: 'medium', label: 'Medium' },
+    { key: 'medium', label: 'Med' },
     { key: 'low', label: 'Low' },
   ];
 
@@ -405,19 +435,15 @@ export default function SettingsScreen() {
     >
       <ThemedView style={[styles.container, { paddingTop: insets.top }]}>
         <ThemedView style={styles.header}>
+          <IconSettings2 size={28} color={theme.text} />
           <ThemedText type="subtitle">Settings</ThemedText>
         </ThemedView>
 
         {showPinSetup && (
-          <ThemedView type="backgroundElement" style={styles.section}>
-            <ThemedText type="smallBold" style={styles.sectionTitle}>
-              Set Up PIN
-            </ThemedText>
+          <GlassCard>
+            <ThemedText type="smallBold" style={styles.sectionTitle}>Set Up PIN</ThemedText>
             <TextInput
-              style={[
-                styles.pinInput,
-                { color: theme.text, backgroundColor: theme.background },
-              ]}
+              style={[styles.pinInput, { color: theme.text, backgroundColor: theme.background }]}
               value={newPin}
               onChangeText={setNewPin}
               placeholder="Enter PIN (4-6 digits)"
@@ -427,10 +453,7 @@ export default function SettingsScreen() {
               maxLength={6}
             />
             <TextInput
-              style={[
-                styles.pinInput,
-                { color: theme.text, backgroundColor: theme.background },
-              ]}
+              style={[styles.pinInput, { color: theme.text, backgroundColor: theme.background }]}
               value={confirmPin}
               onChangeText={setConfirmPin}
               placeholder="Confirm PIN"
@@ -441,56 +464,31 @@ export default function SettingsScreen() {
             />
             <View style={styles.pinActions}>
               <Pressable
-                style={({ pressed }) => [
-                  styles.pinButton,
-                  { backgroundColor: theme.backgroundElement },
-                  pressed && { opacity: 0.7 },
-                ]}
-                onPress={() => {
-                  setShowPinSetup(false);
-                  setNewPin('');
-                  setConfirmPin('');
-                }}
+                style={({ pressed }) => [styles.pinButton, { backgroundColor: theme.backgroundElement }, pressed && { opacity: 0.7 }]}
+                onPress={() => { setShowPinSetup(false); setNewPin(''); setConfirmPin(''); }}
               >
-                <ThemedText>Cancel</ThemedText>
+                <ThemedText type="small">Cancel</ThemedText>
               </Pressable>
               <Pressable
-                style={({ pressed }) => [
-                  styles.pinButton,
-                  { backgroundColor: theme.primary },
-                  pressed && { opacity: 0.7 },
-                ]}
+                style={({ pressed }) => [styles.pinButton, { backgroundColor: theme.primary }, pressed && { opacity: 0.7 }]}
                 onPress={handlePinSetup}
               >
-                <ThemedText style={{ color: '#FFF' }}>Set PIN</ThemedText>
+                <ThemedText type="small" style={{ color: '#FFF' }}>Set PIN</ThemedText>
               </Pressable>
             </View>
-          </ThemedView>
+          </GlassCard>
         )}
 
         {/* General */}
         <GlassCard>
-          <ThemedText type="smallBold" style={styles.sectionTitle}>
-            General
-          </ThemedText>
-          <Toggle
-            label="Compact Mode"
-            value={compactMode}
-            onValueChange={setCompactMode}
-          />
-          <Toggle
-            label="Show Ratings"
-            value={showRatings}
-            onValueChange={setShowRatings}
-          />
-          <Toggle
-            label="Haptic Feedback"
-            value={hapticFeedback}
-            onValueChange={setHapticFeedback}
-          />
+          <ThemedText type="smallBold" style={styles.sectionTitle}>General</ThemedText>
+          <Toggle label="Compact" value={compactMode} onValueChange={setCompactMode} icon={IconLayoutGrid} />
+          <Toggle label="Ratings" value={showRatings} onValueChange={setShowRatings} icon={IconEye} />
+          <Toggle label="Haptics" value={hapticFeedback} onValueChange={setHapticFeedback} icon={IconBell} />
           <SettingRow
             label="Default View"
             value={defaultListView === 'grid' ? 'Grid' : 'List'}
+            icon={IconLayoutGrid}
             onPress={() => {
               Alert.alert('Default View', 'Choose your default view', [
                 { text: 'Cancel', style: 'cancel' },
@@ -503,37 +501,35 @@ export default function SettingsScreen() {
 
         {/* Appearance */}
         <GlassCard>
-          <ThemedText type="smallBold" style={styles.sectionTitle}>
-            Appearance
-          </ThemedText>
-          <View style={styles.themeOptions}>
-            {themeOptions.map((opt) => (
-              <Pressable
-                key={opt.key}
-                style={({ pressed }) => [
-                  styles.themeOption,
-                  {
-                    backgroundColor:
-                      themePref === opt.key
-                        ? theme.backgroundSelected
-                        : theme.background,
-                    borderColor:
-                      themePref === opt.key
-                        ? theme.primary
-                        : theme.border,
-                  },
-                  pressed && { opacity: 0.7 },
-                ]}
-                onPress={() => setThemePref(opt.key)}
-              >
-                <ThemedText
-                  type="small"
-                  themeColor={themePref === opt.key ? 'text' : 'textSecondary'}
+          <ThemedText type="smallBold" style={styles.sectionTitle}>Appearance</ThemedText>
+          <View style={styles.themeGrid}>
+            {themeOptions.map((opt) => {
+              const active = themePref === opt.key;
+              return (
+                <Pressable
+                  key={opt.key}
+                  style={({ pressed }) => [
+                    styles.themeSwatch,
+                    {
+                      borderColor: active ? theme.primary : 'transparent',
+                      borderWidth: active ? 2 : 0,
+                    },
+                    pressed && { opacity: 0.7 },
+                  ]}
+                  onPress={() => setThemePref(opt.key)}
                 >
-                  {opt.label}
-                </ThemedText>
-              </Pressable>
-            ))}
+                  <View
+                    style={[
+                      styles.themeSwatchInner,
+                      {
+                        backgroundColor: opt.colors[0],
+                        borderColor: opt.colors[1],
+                      },
+                    ]}
+                  />
+                </Pressable>
+              );
+            })}
           </View>
         </GlassCard>
 
@@ -552,120 +548,52 @@ export default function SettingsScreen() {
                 ]}
                 onPress={() => handleSwitchProfile(p.id)}
               >
-                <Icon name={p.avatar || 'person.circle'} size={28} color={theme.text} />
-                <ThemedText style={styles.profileName}>{p.name}</ThemedText>
-                {p.isActive && <ThemedText type="small" style={{ color: theme.primary }}>Active</ThemedText>}
+                <Icon name={p.avatar || 'user'} size={24} color={theme.text} />
+                <ThemedText type="small" style={styles.profileName}>{p.name}</ThemedText>
+                {p.isActive && <Icon name="check" size={14} color={theme.primary} />}
               </Pressable>
             ))}
-            <Pressable
-              style={({ pressed }) => [styles.actionButton, { backgroundColor: theme.background }, pressed && { opacity: 0.7 }]}
-              onPress={() => router.push('/profile')}
-            >
-              <ThemedText type="small">Manage Profiles →</ThemedText>
-            </Pressable>
+            <ActionRow label="Manage Profiles" icon={IconUser} onPress={() => router.push('/profile')} />
           </GlassCard>
         )}
 
         {/* Security */}
         <GlassCard>
-          <ThemedText type="smallBold" style={styles.sectionTitle}>
-            Security
-          </ThemedText>
-          <Toggle
-            label="App Lock"
-            value={lockEnabled}
-            onValueChange={handleLockToggle}
-          />
-          {lockEnabled && (
-            <>
-              {bioAvailable && (
-                <Toggle
-                  label="Use Biometric"
-                  value={biometricEnabled}
-                  onValueChange={handleBiometricToggle}
-                />
-              )}
-              {pinConfigured && (
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.dangerButton,
-                    pressed && { opacity: 0.7 },
-                  ]}
-                  onPress={handleRemovePin}
-                >
-                  <ThemedText style={{ color: theme.error }}>
-                    Remove PIN
-                  </ThemedText>
-                </Pressable>
-              )}
-            </>
+          <ThemedText type="smallBold" style={styles.sectionTitle}>Security</ThemedText>
+          <Toggle label="App Lock" value={lockEnabled} onValueChange={handleLockToggle} icon={IconLock} />
+          {lockEnabled && bioAvailable && (
+            <Toggle label="Biometric" value={biometricEnabled} onValueChange={handleBiometricToggle} icon={IconFingerprint} />
+          )}
+          {lockEnabled && pinConfigured && (
+            <ActionRow label="Remove PIN" icon={IconTrash} danger onPress={handleRemovePin} />
           )}
         </GlassCard>
 
         {/* Notifications */}
         <GlassCard>
-          <ThemedText type="smallBold" style={styles.sectionTitle}>
-            Notifications
-          </ThemedText>
-          <Toggle
-            label="Enable Notifications"
-            value={notificationsEnabled}
-            onValueChange={handleNotificationsToggle}
-          />
+          <ThemedText type="smallBold" style={styles.sectionTitle}>Notifications</ThemedText>
+          <Toggle label="Notifications" value={notificationsEnabled} onValueChange={handleNotificationsToggle} icon={IconBell} />
           {notificationsEnabled && (
             <>
-              <Toggle
-                label="Continue Watching"
-                value={continueReminder}
-                onValueChange={handleContinueReminderToggle}
-              />
-              <Toggle
-                label="Daily Goal"
-                value={dailyGoal}
-                onValueChange={handleDailyGoalToggle}
-              />
-              <Toggle
-                label="Weekly Summary"
-                value={weeklySummary}
-                onValueChange={handleWeeklySummaryToggle}
-              />
-              <Toggle
-                label="Streak Reminder"
-                value={streakReminder}
-                onValueChange={handleStreakReminderToggle}
-              />
-              <Toggle
-                label="Backup Reminder"
-                value={backupReminder}
-                onValueChange={handleBackupReminderToggle}
-              />
-              <Toggle
-                label="Release Reminders"
-                value={releaseReminder}
-                onValueChange={handleReleaseReminderToggle}
-              />
+              <Toggle label="Continue" value={continueReminder} onValueChange={handleContinueReminderToggle} icon={IconPlayerPlay} />
+              <Toggle label="Daily Goal" value={dailyGoal} onValueChange={handleDailyGoalToggle} icon={IconAward} />
+              <Toggle label="Weekly" value={weeklySummary} onValueChange={handleWeeklySummaryToggle} icon={IconTrendingUp} />
+              <Toggle label="Streaks" value={streakReminder} onValueChange={handleStreakReminderToggle} icon={IconRefresh} />
+              <Toggle label="Backup" value={backupReminder} onValueChange={handleBackupReminderToggle} icon={IconDatabase} />
+              <Toggle label="Releases" value={releaseReminder} onValueChange={handleReleaseReminderToggle} icon={IconCalendar} />
             </>
           )}
         </GlassCard>
 
         {/* Playback */}
         <GlassCard>
-          <ThemedText type="smallBold" style={styles.sectionTitle}>
-            Playback
-          </ThemedText>
-          <Toggle
-            label="Auto-Play Next"
-            value={autoPlay}
-            onValueChange={setAutoPlay}
-          />
-          <Toggle
-            label="Skip Intros"
-            value={skipIntros}
-            onValueChange={setSkipIntros}
-          />
+          <ThemedText type="smallBold" style={styles.sectionTitle}>Playback</ThemedText>
+          <Toggle label="Auto-Play" value={autoPlay} onValueChange={setAutoPlay} icon={IconPlayerPlay} />
+          <Toggle label="Skip Intros" value={skipIntros} onValueChange={setSkipIntros} icon={IconPlayerSkipForward} />
           <SettingRow
-            label="Video Quality"
+            label="Quality"
             value={qualityOptions.find((q) => q.key === playbackQuality)?.label || 'Auto'}
+            icon={IconMovie}
             onPress={() => {
               Alert.alert('Video Quality', 'Choose playback quality', [
                 { text: 'Cancel', style: 'cancel' },
@@ -680,12 +608,11 @@ export default function SettingsScreen() {
 
         {/* Language */}
         <GlassCard>
-          <ThemedText type="smallBold" style={styles.sectionTitle}>
-            Language
-          </ThemedText>
+          <ThemedText type="smallBold" style={styles.sectionTitle}>Language</ThemedText>
           <SettingRow
-            label="App Language"
-            value={languageOptions.find((l) => l.key === language)?.label || 'English'}
+            label="Language"
+            value={languageOptions.find((l) => l.key === language)?.label || 'EN'}
+            icon={IconWorld}
             onPress={() => {
               Alert.alert('Language', 'Choose app language', [
                 { text: 'Cancel', style: 'cancel' },
@@ -698,107 +625,34 @@ export default function SettingsScreen() {
           />
         </GlassCard>
 
-        {/* Data & Storage */}
+        {/* Data */}
         <GlassCard>
-          <ThemedText type="smallBold" style={styles.sectionTitle}>
-            Data & Storage
-          </ThemedText>
-          <Toggle
-            label="Auto Backup"
-            value={autoBackup}
-            onValueChange={setAutoBackup}
-          />
-          <Pressable
-            style={({ pressed }) => [
-              styles.actionButton,
-              { backgroundColor: theme.background },
-              pressed && { opacity: 0.7 },
-            ]}
-            onPress={() => router.push('/backup')}
-          >
-            <ThemedText>Backup & Restore</ThemedText>
-          </Pressable>
-          <Pressable
-            style={({ pressed }) => [
-              styles.actionButton,
-              { backgroundColor: theme.background },
-              pressed && { opacity: 0.7 },
-            ]}
-            onPress={() => router.push('/import')}
-          >
-            <ThemedText>Import Data</ThemedText>
-          </Pressable>
-          <Pressable
-            style={({ pressed }) => [
-              styles.actionButton,
-              { backgroundColor: theme.background },
-              pressed && { opacity: 0.7 },
-            ]}
-            onPress={() => {
-              Alert.alert('Clear Cache', 'This will clear temporary files. Continue?', [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'Clear', style: 'destructive', onPress: () => Alert.alert('Done', 'Cache cleared') },
-              ]);
-            }}
-          >
-            <ThemedText style={{ color: theme.error }}>Clear Cache</ThemedText>
-          </Pressable>
-        </GlassCard>
-
-        {/* Advanced */}
-        <GlassCard>
-          <ThemedText type="smallBold" style={styles.sectionTitle}>
-            Advanced
-          </ThemedText>
-          <Pressable
-            style={({ pressed }) => [
-              styles.actionButton,
-              { backgroundColor: theme.background },
-              pressed && { opacity: 0.7 },
-            ]}
-            onPress={() => {
-              Alert.alert('Reset All Data', 'This will permanently delete all your data. This action cannot be undone.', [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'Delete Everything', style: 'destructive', onPress: () => Alert.alert('Done', 'Data reset') },
-              ]);
-            }}
-          >
-            <ThemedText style={{ color: theme.error }}>Reset All Data</ThemedText>
-          </Pressable>
-          <Pressable
-            style={({ pressed }) => [
-              styles.actionButton,
-              { backgroundColor: theme.background },
-              pressed && { opacity: 0.7 },
-            ]}
-            onPress={() => Alert.alert('Help', 'Visit our help center at support.thelist.app')}
-          >
-            <ThemedText>Help & Support</ThemedText>
-          </Pressable>
-          <Pressable
-            style={({ pressed }) => [
-              styles.actionButton,
-              { backgroundColor: theme.background },
-              pressed && { opacity: 0.7 },
-            ]}
-            onPress={() => Alert.alert('About', 'The_List v1.0.0\nYour watchlist. Organized.\n\nBuilt for entertainment lovers.')}
-          >
-            <ThemedText>About The_List</ThemedText>
-          </Pressable>
+          <ThemedText type="smallBold" style={styles.sectionTitle}>Data</ThemedText>
+          <Toggle label="Auto Backup" value={autoBackup} onValueChange={setAutoBackup} icon={IconDatabase} />
+          <ActionRow label="Backup & Restore" icon={IconDownload} onPress={() => router.push('/backup')} />
+          <ActionRow label="Import" icon={IconUpload} onPress={() => router.push('/import')} />
+          <ActionRow label="Clear Cache" icon={IconTrash} danger onPress={() => {
+            Alert.alert('Clear Cache', 'This will clear temporary files. Continue?', [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Clear', style: 'destructive', onPress: () => Alert.alert('Done', 'Cache cleared') },
+            ]);
+          }} />
         </GlassCard>
 
         {/* About */}
         <GlassCard>
-          <ThemedText type="smallBold" style={styles.sectionTitle}>
-            About
-          </ThemedText>
-          <ThemedView style={styles.aboutRow}>
-            <ThemedText themeColor="textSecondary">Version</ThemedText>
-            <ThemedText>1.0.0</ThemedText>
-          </ThemedView>
-          <ThemedView style={styles.aboutRow}>
-            <ThemedText themeColor="textSecondary">Build</ThemedText>
-            <ThemedText>2026.08.01</ThemedText>
+          <ThemedText type="smallBold" style={styles.sectionTitle}>About</ThemedText>
+          <ActionRow label="Help" icon={IconHelp} onPress={() => Alert.alert('Help', 'Visit our help center at support.nextwatch.app')} />
+          <ActionRow label="About NextWatch" icon={IconInfoCircle} onPress={() => Alert.alert('About', 'NextWatch v1.0.0\nYour watchlist. Organized.\n\nBuilt for entertainment lovers.')} />
+          <ActionRow label="Reset Data" icon={IconTrash} danger onPress={() => {
+            Alert.alert('Reset All Data', 'This will permanently delete all your data. This action cannot be undone.', [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Delete Everything', style: 'destructive', onPress: () => Alert.alert('Done', 'Data reset') },
+            ]);
+          }} />
+          <ThemedView style={styles.versionRow}>
+            <ThemedText type="small" themeColor="textSecondary">v1.0.0</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">Build 2026.08.01</ThemedText>
           </ThemedView>
         </GlassCard>
       </ThemedView>
@@ -808,59 +662,44 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
+  scroll: { flex: 1 },
+  scrollContent: { flexDirection: 'row', justifyContent: 'center' },
   container: {
     flex: 1,
     paddingHorizontal: Spacing.four,
     maxWidth: MaxContentWidth,
-    gap: Spacing.five,
+    gap: Spacing.three,
     paddingBottom: Spacing.four,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
     paddingVertical: Spacing.three,
-  },
-  section: {
-    borderRadius: Spacing.four,
-    padding: Spacing.four,
-    gap: Spacing.three,
   },
   sectionTitle: {
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.8,
     marginBottom: Spacing.one,
-  },
-  themeOptions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.two,
-  },
-  themeOption: {
-    flex: 1,
-    minWidth: '22%',
-    paddingVertical: Spacing.three,
-    paddingHorizontal: Spacing.four,
-    borderRadius: Spacing.three,
-    alignItems: 'center',
-    borderWidth: 1,
+    opacity: 0.6,
   },
   toggleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: Spacing.two,
+    paddingVertical: Spacing.two - 1,
+  },
+  toggleLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
   },
   toggleTrack: {
-    width: 48,
-    height: 28,
-    borderRadius: 14,
+    width: 44,
+    height: 26,
+    borderRadius: 13,
     justifyContent: 'center',
-    paddingHorizontal: 3,
+    paddingHorizontal: 2,
   },
   toggleThumb: {
     width: 22,
@@ -875,26 +714,58 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: Spacing.two,
+    paddingVertical: Spacing.two - 1,
   },
-  settingRowLeft: {
+  settingLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
   },
-  settingRowRight: {
+  settingRight: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.one,
   },
-  dangerButton: {
-    paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.four,
-    borderRadius: Spacing.three,
+  actionRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: Spacing.two,
+    paddingVertical: Spacing.two - 1,
+  },
+  themeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
+  },
+  themeSwatch: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    padding: 3,
+  },
+  themeSwatchInner: {
+    flex: 1,
+    borderRadius: 9,
+    borderWidth: 1,
+  },
+  profileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.two,
+    borderRadius: Spacing.three,
+    gap: Spacing.two,
+  },
+  profileName: { flex: 1, fontWeight: '500' },
+  versionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingTop: Spacing.two,
+    marginTop: Spacing.one,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(128,128,128,0.2)',
   },
   pinInput: {
-    height: 48,
+    height: 44,
     borderRadius: Spacing.three,
     paddingHorizontal: Spacing.four,
     fontSize: 16,
@@ -903,33 +774,12 @@ const styles = StyleSheet.create({
   },
   pinActions: {
     flexDirection: 'row',
-    gap: Spacing.three,
-    marginTop: Spacing.one,
+    gap: Spacing.two,
   },
   pinButton: {
     flex: 1,
-    paddingVertical: Spacing.three,
+    paddingVertical: Spacing.two,
     borderRadius: Spacing.three,
     alignItems: 'center',
   },
-  actionButton: {
-    paddingVertical: Spacing.three,
-    paddingHorizontal: Spacing.four,
-    borderRadius: Spacing.three,
-    alignItems: 'center',
-  },
-  aboutRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: Spacing.one,
-  },
-  profileRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: Spacing.three,
-    borderRadius: Spacing.three,
-    gap: Spacing.three,
-  },
-  profileAvatar: { fontSize: 28 },
-  profileName: { flex: 1, fontWeight: '600' },
 });

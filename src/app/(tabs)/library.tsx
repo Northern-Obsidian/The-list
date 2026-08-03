@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 
 import { AnimatedList } from '@/components/animated-list';
 import { ThemedText } from '@/components/themed-text';
@@ -38,11 +38,13 @@ export default function LibraryScreen() {
   const [items, setItems] = useState<(typeof media.$inferSelect)[]>([]);
   const paddingBottom = insets.bottom + BottomTabInset + Spacing.three;
 
-  useEffect(() => {
-    const { db } = getDatabase();
-    const allItems = db.select().from(media).all();
-    setItems(allItems);
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const { db } = getDatabase();
+      const allItems = db.select().from(media).all();
+      setItems(allItems);
+    }, [])
+  );
 
   const sortedAndFiltered = useMemo(() => {
     let result = [...items];
@@ -127,7 +129,7 @@ export default function LibraryScreen() {
                 ]}
                 onPress={() => setViewMode(mode)}
               >
-                <Icon name={mode === 'grid' ? 'square.grid.2x2' : 'list.bullet'} size={16} color={viewMode === mode ? theme.text : theme.textSecondary} />
+                <Icon name={mode === 'grid' ? 'layout-grid' : 'list'} size={16} color={viewMode === mode ? theme.text : theme.textSecondary} />
               </Pressable>
             ))}
           </ThemedView>

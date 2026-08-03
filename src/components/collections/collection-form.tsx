@@ -198,7 +198,7 @@ export function CollectionForm({ initialData, onSave, onCancel }: CollectionForm
                 ]}
                 onPress={() => update('color', c)}
               >
-                {form.color === c && <Icon name="checkmark" size={16} color="#FFF" />}
+                {form.color === c && <Icon name="check" size={16} color="#FFF" />}
               </Pressable>
             ))}
           </View>

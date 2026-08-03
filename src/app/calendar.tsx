@@ -163,13 +163,13 @@ export default function CalendarScreen() {
 
         <ThemedView style={styles.navigation}>
           <Pressable onPress={() => navigateMonth(-1)} style={styles.navButton}>
-            <Icon name="chevron.left" size={20} color={theme.text} />
+            <Icon name="chevron-left" size={20} color={theme.text} />
           </Pressable>
           <ThemedText type="subtitle" style={styles.monthTitle}>
             {MONTHS[month]} {year}
           </ThemedText>
           <Pressable onPress={() => navigateMonth(1)} style={styles.navButton}>
-            <Icon name="chevron.right" size={20} color={theme.text} />
+            <Icon name="chevron-right" size={20} color={theme.text} />
           </Pressable>
         </ThemedView>
 

@@ -76,7 +76,7 @@ export function Input({
             style={styles.clearButton}
             onPress={() => onChangeText('')}
           >
-            <Icon name="xmark" size={16} color={theme.textSecondary} />
+            <Icon name="x" size={16} color={theme.textSecondary} />
           </Pressable>
         )}
       </View>

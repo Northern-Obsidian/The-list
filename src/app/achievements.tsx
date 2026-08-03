@@ -92,7 +92,7 @@ export default function AchievementsScreen() {
               </ThemedText>
             </View>
           </View>
-          {isUnlocked && <Icon name="checkmark" size={20} color={theme.success} />}
+          {isUnlocked && <Icon name="check" size={20} color={theme.success} />}
         </ThemedView>
       );
     },

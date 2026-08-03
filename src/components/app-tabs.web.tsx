@@ -6,21 +6,39 @@ import {
   type TabTriggerSlotProps,
   type TabListProps,
 } from 'expo-router/ui';
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
+import {
+  IconHome,
+  IconSearch,
+  IconBook2,
+  IconChartBar,
+  IconSettings2,
+} from '@tabler/icons-react-native';
 import { Pressable, useColorScheme, View, StyleSheet } from 'react-native';
-
-import { ThemedText } from './themed-text';
-import { ThemedView } from './themed-view';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  interpolate,
+} from 'react-native-reanimated';
 
 import { Colors, MaxContentWidth, Spacing } from '@/constants/theme';
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
 const tabs = [
-  { name: 'index', href: '/', icon: 'house', label: 'Home' },
-  { name: 'search', href: '/search', icon: 'magnifyingglass', label: 'Search' },
-  { name: 'library', href: '/library', icon: 'books.vertical', label: 'Library' },
-  { name: 'stats', href: '/stats', icon: 'chart.bar', label: 'Stats' },
-  { name: 'settings', href: '/settings', icon: 'gearshape', label: 'Settings' },
+  { name: 'index', href: '/', icon: IconHome },
+  { name: 'search', href: '/search', icon: IconSearch },
+  { name: 'library', href: '/library', icon: IconBook2 },
+  { name: 'stats', href: '/stats', icon: IconChartBar },
+  { name: 'settings', href: '/settings', icon: IconSettings2 },
 ] as const;
+
+const SPRING_CONFIG = {
+  damping: 15,
+  stiffness: 200,
+  mass: 0.5,
+};
 
 export default function AppTabs() {
   return (
@@ -30,7 +48,7 @@ export default function AppTabs() {
         <CustomTabList>
           {tabs.map((tab) => (
             <TabTrigger key={tab.name} name={tab.name} href={tab.href} asChild>
-              <TabButton icon={tab.icon}>{tab.label}</TabButton>
+              <TabButton icon={tab.icon} />
             </TabTrigger>
           ))}
         </CustomTabList>
@@ -40,52 +58,71 @@ export default function AppTabs() {
 }
 
 function TabButton({
-  children,
   isFocused,
-  icon,
+  icon: IconComponent,
   ...props
-}: TabTriggerSlotProps & { icon: string }) {
+}: TabTriggerSlotProps & { icon: typeof IconHome }) {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
+
+  const scale = useSharedValue(1);
+  const activeProgress = useSharedValue(isFocused ? 1 : 0);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    backgroundColor: interpolate(
+      activeProgress.value,
+      [0, 1],
+      [0, 1],
+    )
+      ? `rgba(60, 159, 254, ${interpolate(activeProgress.value, [0, 1], [0, 0.12])})`
+      : 'transparent',
+  }));
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.82, SPRING_CONFIG);
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1, SPRING_CONFIG);
+  };
+
+  activeProgress.value = withTiming(isFocused ? 1 : 0, { duration: 200 });
+
+  const activeColor = colors.primary || '#3C9FFE';
+  const iconColor = isFocused ? activeColor : colors.textSecondary;
+  const strokeWidth = isFocused ? 2.5 : 1.8;
+
   return (
-    <Pressable {...props} style={({ pressed }) => pressed && styles.pressed}>
-      <ThemedView
-        type={isFocused ? 'backgroundSelected' : 'backgroundElement'}
-        style={styles.tabButtonView}>
-        <SymbolView
-          tintColor={isFocused ? colors.text : colors.textSecondary}
-          name={{ ios: icon, web: icon } as SymbolViewProps['name']}
-          size={16}
-        />
-        <ThemedText
-          type="small"
-          themeColor={isFocused ? 'text' : 'textSecondary'}>
-          {children}
-        </ThemedText>
-      </ThemedView>
-    </Pressable>
+    <AnimatedPressable
+      {...props}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={[styles.tabButton, animatedStyle]}>
+      <IconComponent size={22} color={iconColor} strokeWidth={strokeWidth} />
+    </AnimatedPressable>
   );
 }
 
 export function CustomTabList(props: TabListProps) {
   const scheme = useColorScheme();
-  const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
 
   return (
     <View {...props} style={styles.tabListContainer}>
-      <ThemedView type="backgroundElement" style={styles.innerContainer}>
-        <ThemedText type="smallBold" style={styles.brandText}>
-          The_List
-        </ThemedText>
-
+      <View
+        style={[
+          styles.innerContainer,
+          {
+            backgroundColor: scheme === 'dark' || scheme === 'unspecified'
+              ? 'rgba(30, 30, 30, 0.8)'
+              : 'rgba(255, 255, 255, 0.8)',
+            borderColor: scheme === 'dark' || scheme === 'unspecified'
+              ? 'rgba(255, 255, 255, 0.08)'
+              : 'rgba(0, 0, 0, 0.06)',
+          },
+        ]}>
         {props.children}
-
-        <SymbolView
-          tintColor={colors.textSecondary}
-          name={{ ios: 'line.3.horizontal', web: 'line.3.horizontal' } as unknown as SymbolViewProps['name']}
-          size={16}
-        />
-      </ThemedView>
+      </View>
     </View>
   );
 }
@@ -93,34 +130,33 @@ export function CustomTabList(props: TabListProps) {
 const styles = StyleSheet.create({
   tabListContainer: {
     position: 'absolute',
+    bottom: 24,
     width: '100%',
-    padding: Spacing.three,
     justifyContent: 'center',
     alignItems: 'center',
-    flexDirection: 'row',
+    paddingHorizontal: Spacing.five,
   },
   innerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.one,
     paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.five,
-    borderRadius: Spacing.five,
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexGrow: 1,
-    gap: Spacing.two,
+    paddingHorizontal: Spacing.two,
+    borderRadius: 999,
     maxWidth: MaxContentWidth,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 12,
   },
-  brandText: {
-    marginRight: 'auto',
-  },
-  pressed: {
-    opacity: 0.7,
-  },
-  tabButtonView: {
-    paddingVertical: Spacing.one,
-    paddingHorizontal: Spacing.three,
-    borderRadius: Spacing.three,
-    flexDirection: 'row',
+  tabButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
-    gap: Spacing.half,
+    justifyContent: 'center',
   },
 });

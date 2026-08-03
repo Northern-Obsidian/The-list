@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { desc } from 'drizzle-orm';
 
 import { ThemedText } from '@/components/themed-text';
@@ -35,36 +35,38 @@ export default function HomeScreen() {
 
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const { db } = getDatabase();
-    const counts = getMediaCounts();
-    setTotalItems(counts.total);
-    setMoviesCount(counts.byType['movie'] || 0);
-    const showTypes = ['tv_show', 'mini_series', 'web_series'];
-    setShowsCount(showTypes.reduce((sum, t) => sum + (counts.byType[t] || 0), 0));
-    setAnimeCount(counts.byType['anime'] || 0);
+  useFocusEffect(
+    useCallback(() => {
+      const { db } = getDatabase();
+      const counts = getMediaCounts();
+      setTotalItems(counts.total);
+      setMoviesCount(counts.byType['movie'] || 0);
+      const showTypes = ['tv_show', 'mini_series', 'web_series'];
+      setShowsCount(showTypes.reduce((sum, t) => sum + (counts.byType[t] || 0), 0));
+      setAnimeCount(counts.byType['anime'] || 0);
 
-    setInProgress(getInProgress().map(toMediaCardItem));
-    setFavoriteItems(getFavorites().map(toMediaCardItem));
+      setInProgress(getInProgress().map(toMediaCardItem));
+      setFavoriteItems(getFavorites().map(toMediaCardItem));
 
-    const recentHistory = db
-      .select()
-      .from(watchHistory)
-      .orderBy(desc(watchHistory.watchedAt))
-      .limit(10)
-      .all();
-    if (recentHistory.length > 0) {
-      const recentMediaIds = [...new Set(recentHistory.map((h) => h.mediaId))];
-      const allMedia = db.select().from(media).all();
-      const recentMedia = allMedia
-        .filter((m) => recentMediaIds.includes(m.id))
-        .map(toMediaCardItem);
-      setRecentItems(recentMedia.slice(0, 5));
-    }
+      const recentHistory = db
+        .select()
+        .from(watchHistory)
+        .orderBy(desc(watchHistory.watchedAt))
+        .limit(10)
+        .all();
+      if (recentHistory.length > 0) {
+        const recentMediaIds = [...new Set(recentHistory.map((h) => h.mediaId))];
+        const allMedia = db.select().from(media).all();
+        const recentMedia = allMedia
+          .filter((m) => recentMediaIds.includes(m.id))
+          .map(toMediaCardItem);
+        setRecentItems(recentMedia.slice(0, 5));
+      }
 
-    setCollectionsList(getCollectionsWithCounts());
-    setLoading(false);
-  }, []);
+      setCollectionsList(getCollectionsWithCounts());
+      setLoading(false);
+    }, [])
+  );
 
   return (
     <ErrorBoundary name="HomeScreen">
@@ -188,7 +190,7 @@ export default function HomeScreen() {
               }
             }}
           >
-            <Icon name="die.face.3" size={32} color={theme.primary} />
+            <Icon name="dice-3" size={32} color={theme.primary} />
             <ThemedView style={styles.randomPickerInfo}>
               <ThemedText type="smallBold">
                 Pick for Me
@@ -197,7 +199,7 @@ export default function HomeScreen() {
                 Surprise me with a random item
               </ThemedText>
             </ThemedView>
-            <Icon name="chevron.right" size={14} color={theme.textSecondary} />
+            <Icon name="chevron-right" size={14} color={theme.textSecondary} />
           </Pressable>
         </GlassCard>
 

@@ -9,11 +9,10 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { getDatabase } from '@/db';
-import { media, series, seasons, episodes } from '@/db/schema';
+import { getDatabase, getActiveProfileId } from '@/db';
+import { media, series, seasons, episodes, ratings } from '@/db/schema';
 import { generateId } from '@/utils/generate-id';
 import { validateMediaForm } from '@/utils/validation';
-import { getActiveProfileId } from '@/db';
 import type { MediaFormData, MediaType, WatchStatus } from '@/types/media';
 import { SERIES_TYPES } from '@/types/media';
 
@@ -31,6 +30,7 @@ const MEDIA_TYPES: { key: MediaType; label: string }[] = [
   { key: 'audiobook', label: 'Audiobook' },
   { key: 'book', label: 'Book' },
   { key: 'game', label: 'Game' },
+  { key: 'drama', label: 'Drama' },
 ];
 
 const STATUSES: { key: WatchStatus; label: string }[] = [
@@ -207,6 +207,41 @@ export function MediaForm({ initialData, onSave, onCancel }: MediaFormProps) {
         }
       }
 
+      // Save rating to ratings table
+      const ratingScore = form.personalRating || form.rating?.score;
+      if (ratingScore) {
+        const ratingData = form.rating as { heart?: boolean; thumbsUp?: boolean; masterpiece?: boolean; needRewatch?: boolean } || {};
+        const existingRating = db.select().from(ratings).where(eq(ratings.mediaId, mediaId)).get();
+        if (existingRating) {
+          db.update(ratings)
+            .set({
+              score: ratingScore,
+              heart: ratingData.heart ?? false,
+              thumbsUp: ratingData.thumbsUp ?? false,
+              masterpiece: ratingData.masterpiece ?? false,
+              needRewatch: ratingData.needRewatch ?? false,
+              updatedAt: now,
+            })
+            .where(eq(ratings.mediaId, mediaId))
+            .run();
+        } else {
+          db.insert(ratings)
+            .values({
+              id: generateId(),
+              mediaId,
+              profileId,
+              score: ratingScore,
+              heart: ratingData.heart ?? false,
+              thumbsUp: ratingData.thumbsUp ?? false,
+              masterpiece: ratingData.masterpiece ?? false,
+              needRewatch: ratingData.needRewatch ?? false,
+              createdAt: now,
+              updatedAt: now,
+            })
+            .run();
+        }
+      }
+
       onSave();
     } catch {
       setErrors({ title: 'Failed to save. Please try again.' });
@@ -241,33 +276,37 @@ export function MediaForm({ initialData, onSave, onCancel }: MediaFormProps) {
         />
 
         <ThemedView style={styles.fieldGroup}>
-          <ThemedText type="small" themeColor="textSecondary" style={styles.fieldLabel}>
+          <ThemedText type="smallBold" themeColor="textSecondary" style={styles.fieldLabel}>
             Type
           </ThemedText>
-          <View style={styles.chipRow}>
+          <View style={styles.chipGrid}>
             {MEDIA_TYPES.map((t) => (
-              <Chip
-                key={t.key}
-                label={t.label}
-                selected={form.mediaType === t.key}
-                onPress={() => update('mediaType', t.key)}
-              />
+              <View key={t.key} style={styles.chipCell}>
+                <Chip
+                  label={t.label}
+                  selected={form.mediaType === t.key}
+                  onPress={() => update('mediaType', t.key)}
+                  fullWidth
+                />
+              </View>
             ))}
           </View>
         </ThemedView>
 
         <ThemedView style={styles.fieldGroup}>
-          <ThemedText type="small" themeColor="textSecondary" style={styles.fieldLabel}>
+          <ThemedText type="smallBold" themeColor="textSecondary" style={styles.fieldLabel}>
             Status
           </ThemedText>
-          <View style={styles.chipRow}>
+          <View style={styles.chipGrid}>
             {STATUSES.map((s) => (
-              <Chip
-                key={s.key}
-                label={s.label}
-                selected={form.status === s.key}
-                onPress={() => update('status', s.key)}
-              />
+              <View key={s.key} style={styles.chipCell}>
+                <Chip
+                  label={s.label}
+                  selected={form.status === s.key}
+                  onPress={() => update('status', s.key)}
+                  fullWidth
+                />
+              </View>
             ))}
           </View>
         </ThemedView>
@@ -318,17 +357,19 @@ export function MediaForm({ initialData, onSave, onCancel }: MediaFormProps) {
             </ThemedView>
 
             <ThemedView style={styles.fieldGroup}>
-              <ThemedText type="small" themeColor="textSecondary" style={styles.fieldLabel}>
+              <ThemedText type="smallBold" themeColor="textSecondary" style={styles.fieldLabel}>
                 Air Status
               </ThemedText>
-              <View style={styles.chipRow}>
+              <View style={styles.chipGrid}>
                 {[{ key: '', label: 'N/A' }, { key: 'airing', label: 'Airing' }, { key: 'completed', label: 'Completed' }, { key: 'upcoming', label: 'Upcoming' }].map((opt) => (
-                  <Chip
-                    key={opt.key}
-                    label={opt.label}
-                    selected={(form.airStatus || '') === opt.key}
-                    onPress={() => update('airStatus', opt.key || undefined)}
-                  />
+                  <View key={opt.key} style={styles.chipCell}>
+                    <Chip
+                      label={opt.label}
+                      selected={(form.airStatus || '') === opt.key}
+                      onPress={() => update('airStatus', opt.key || undefined)}
+                      fullWidth
+                    />
+                  </View>
                 ))}
               </View>
             </ThemedView>
@@ -346,17 +387,19 @@ export function MediaForm({ initialData, onSave, onCancel }: MediaFormProps) {
         />
 
         <ThemedView style={styles.fieldGroup}>
-          <ThemedText type="small" themeColor="textSecondary" style={styles.fieldLabel}>
+          <ThemedText type="smallBold" themeColor="textSecondary" style={styles.fieldLabel}>
             Genres
           </ThemedText>
-          <View style={styles.chipRow}>
+          <View style={styles.chipGrid}>
             {GENRE_OPTIONS.map((g) => (
-              <Chip
-                key={g}
-                label={g}
-                selected={form.genres?.includes(g)}
-                onPress={() => toggleGenre(g)}
-              />
+              <View key={g} style={styles.chipCell}>
+                <Chip
+                  label={g}
+                  selected={form.genres?.includes(g)}
+                  onPress={() => toggleGenre(g)}
+                  fullWidth
+                />
+              </View>
             ))}
           </View>
         </ThemedView>
@@ -403,7 +446,7 @@ export function MediaForm({ initialData, onSave, onCancel }: MediaFormProps) {
         />
 
         <ThemedView style={styles.fieldGroup}>
-          <ThemedText type="small" themeColor="textSecondary" style={styles.fieldLabel}>
+          <ThemedText type="smallBold" themeColor="textSecondary" style={styles.fieldLabel}>
             Rating
           </ThemedText>
           <Input
@@ -498,7 +541,9 @@ const styles = StyleSheet.create({
   scrollContent: { flexDirection: 'row', justifyContent: 'center' },
   form: { flex: 1, maxWidth: MaxContentWidth, paddingHorizontal: Spacing.four, paddingBottom: Spacing.six, gap: Spacing.four },
   fieldGroup: { gap: Spacing.two },
-  fieldLabel: { marginLeft: Spacing.one },
+  fieldLabel: { marginLeft: Spacing.one, fontSize: 16 },
+  chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
+  chipCell: { minWidth: 90, flexGrow: 1, flexBasis: '30%' },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   row: { flexDirection: 'row', gap: Spacing.three },
   halfField: { flex: 1 },

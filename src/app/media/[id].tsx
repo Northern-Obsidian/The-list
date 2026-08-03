@@ -175,7 +175,7 @@ export default function MediaDetailScreen() {
             style={({ pressed }) => [styles.ratingBtn, { backgroundColor: theme.backgroundElement }, ratingData?.thumbsUp && { backgroundColor: theme.primary }, pressed && { opacity: 0.7 }]}
             onPress={() => handleRatingToggle('thumbsUp')}
           >
-            <Icon name="hand.thumbsup" size={24} color={ratingData?.thumbsUp ? '#FFF' : theme.textSecondary} />
+            <Icon name="thumb-up" size={24} color={ratingData?.thumbsUp ? '#FFF' : theme.textSecondary} />
           </Pressable>
           <Pressable
             style={({ pressed }) => [styles.ratingBtn, { backgroundColor: theme.backgroundElement }, ratingData?.masterpiece && { backgroundColor: theme.warning }, pressed && { opacity: 0.7 }]}
@@ -187,7 +187,7 @@ export default function MediaDetailScreen() {
             style={({ pressed }) => [styles.ratingBtn, { backgroundColor: theme.backgroundElement }, ratingData?.needRewatch && { backgroundColor: theme.success }, pressed && { opacity: 0.7 }]}
             onPress={() => handleRatingToggle('needRewatch')}
           >
-            <Icon name="arrow.triangle.2.circlepath" size={24} color={ratingData?.needRewatch ? '#FFF' : theme.textSecondary} />
+            <Icon name="refresh" size={24} color={ratingData?.needRewatch ? '#FFF' : theme.textSecondary} />
           </Pressable>
         </ThemedView>
 
@@ -226,7 +226,7 @@ export default function MediaDetailScreen() {
 
         <View style={styles.actionRow}>
           <Pressable style={({ pressed }) => [styles.actionBtn, { backgroundColor: theme.backgroundElement }, pressed && { opacity: 0.7 }]} onPress={() => router.push(`/media/${id}/review`)}>
-            <Icon name="square.and.pencil" size={14} color={theme.text} />
+            <Icon name="edit" size={14} color={theme.text} />
             <ThemedText type="small"> Review</ThemedText>
           </Pressable>
           <Pressable style={({ pressed }) => [styles.actionBtn, { backgroundColor: theme.backgroundElement }, pressed && { opacity: 0.7 }]} onPress={() => router.push(`/media/${id}/edit`)}>

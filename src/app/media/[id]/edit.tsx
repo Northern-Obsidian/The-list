@@ -8,7 +8,11 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { getMediaById } from '@/db/queries';
+import { getDatabase } from '@/db';
+import { series } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 import type { MediaFormData } from '@/types/media';
+import { SERIES_TYPES } from '@/types/media';
 
 export default function EditMediaScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -19,6 +23,12 @@ export default function EditMediaScreen() {
     if (!id) return;
     const mediaItem = getMediaById(id);
     if (mediaItem) {
+      const isSeriesType = SERIES_TYPES.includes(mediaItem.mediaType as typeof SERIES_TYPES[number]);
+      let seriesData = null;
+      if (isSeriesType) {
+        const { db } = getDatabase();
+        seriesData = db.select().from(series).where(eq(series.id, id)).get();
+      }
       setInitialData({
         id: mediaItem.id,
         title: mediaItem.title,
@@ -37,6 +47,9 @@ export default function EditMediaScreen() {
         favorite: !!mediaItem.favorite,
         notes: mediaItem.notes || '',
         originalTitle: mediaItem.originalTitle || '',
+        totalSeasons: seriesData?.totalSeasons || undefined,
+        totalEpisodes: seriesData?.totalEpisodes || undefined,
+        airStatus: seriesData?.airStatus || undefined,
       });
     }
   }, [id]);

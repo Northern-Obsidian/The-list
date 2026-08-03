@@ -1,11 +1,12 @@
 {
-  "name": "the_list",
+  "name": "nextwatch",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
     "@expo/ui": "~56.0.24",
     "@gorhom/bottom-sheet": "5.1.4",
     "@shopify/flash-list": "2.0.2",
+    "@tabler/icons-react-native": "^3.46.0",
     "drizzle-orm": "^1.0.0-rc.4",
     "expo": "~56.0.18",
     "expo-auth-session": "~56.0.16",

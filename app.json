@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "The_List",
+    "name": "NextWatch",
     "slug": "The_List",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -26,22 +26,22 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/icons/silver.png"
+      "favicon": "./assets/images/icons/favicon.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#202020",
-          "image": "./assets/images/icons/silver.png",
-          "imageWidth": 76
+          "backgroundColor": "#000000",
+          "image": "./assets/images/icons/splash.png",
+          "imageWidth": 120
         }
       ],
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/icons/main.png",
+          "icon": "./assets/images/icons/icon.png",
           "color": "#3C9FFE",
           "sounds": [
             "./assets/sounds/notification.wav"

@@ -9,9 +9,10 @@ export type ChipProps = {
   selected?: boolean;
   onPress?: () => void;
   color?: string;
+  fullWidth?: boolean;
 };
 
-export function Chip({ label, selected, onPress, color }: ChipProps) {
+export function Chip({ label, selected, onPress, color, fullWidth }: ChipProps) {
   const theme = useTheme();
 
   const bgColor = selected
@@ -23,6 +24,7 @@ export function Chip({ label, selected, onPress, color }: ChipProps) {
     <Pressable
       style={({ pressed }) => [
         styles.chip,
+        fullWidth && styles.chipFull,
         { backgroundColor: bgColor },
         pressed && !selected && { opacity: 0.7 },
       ]}
@@ -34,6 +36,7 @@ export function Chip({ label, selected, onPress, color }: ChipProps) {
         <ThemedText
           type="small"
           style={[styles.label, { color: textColor }]}
+          numberOfLines={1}
         >
           {label}
         </ThemedText>
@@ -49,7 +52,12 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderCurve: 'continuous',
   },
+  chipFull: {
+    flex: 1,
+    alignItems: 'center',
+  },
   label: {
     fontWeight: '500',
+    textAlign: 'center',
   },
 });
