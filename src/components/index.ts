@@ -15,7 +15,6 @@ export { ThemedView } from './themed-view';
 export type { ThemedViewProps } from './themed-view';
 export { WatchProviderLinks } from './watch-provider-links';
 export type { WatchProviderLinksProps } from './watch-provider-links';
-export { WebBadge } from './web-badge';
 export { MediaCard } from './media/media-card';
 export type { MediaCardItem } from './media/media-card';
 export { QuickAddForm } from './media/quick-add-form';
