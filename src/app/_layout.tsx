@@ -7,6 +7,7 @@ import { ErrorBoundary } from '@/components/error-boundary';
 import { ThemeProvider } from '@/contexts/theme-context';
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AppLockGuard } from '@/components/app-lock-guard';
+import { FloatingTabBar } from '@/components/ui/floating-tab-bar';
 import { getDatabase } from '@/db';
 import {
   requestNotificationPermissions,
@@ -91,6 +92,7 @@ export default function RootLayout() {
           <Stack.Screen name="tags/[id]" options={{ animation: 'slide_from_right' }} />
           <Stack.Screen name="tags/index" options={{ animation: 'slide_from_right' }} />
         </Stack>
+        <FloatingTabBar />
       </AppLockGuard>
       </ErrorBoundary>
     </ThemeProvider>

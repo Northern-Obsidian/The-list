@@ -27,11 +27,10 @@ import {
   IconTrendingUp,
   IconUser,
   IconChevronRight,
-  IconSettings2,
+  IconEdit,
 } from '@tabler/icons-react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { GlassCard } from '@/components/glass-card';
 import { Icon } from '@/components/ui/icon';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
@@ -396,6 +395,8 @@ export default function SettingsScreen() {
     setProfiles((prev) => prev.map((p) => ({ ...p, isActive: p.id === profileId })));
   }, []);
 
+  const activeProfile = profiles.find((p) => p.isActive);
+
   const themeOptions: { key: ThemeMode; colors: string[] }[] = [
     { key: 'system', colors: ['#888888', '#CCCCCC'] },
     { key: 'dark', colors: ['#1E1E1E', '#2A2A2A'] },
@@ -427,236 +428,288 @@ export default function SettingsScreen() {
 
   return (
     <ErrorBoundary name="SettingsScreen">
-    <ScrollView
-      style={[styles.scroll, { backgroundColor: theme.background }]}
-      contentContainerStyle={styles.scrollContent}
-      contentInset={{ bottom: paddingBottom }}
-      contentInsetAdjustmentBehavior="automatic"
-    >
-      <ThemedView style={[styles.container, { paddingTop: insets.top }]}>
-        <ThemedView style={styles.header}>
-          <IconSettings2 size={28} color={theme.text} />
-          <ThemedText type="subtitle">Settings</ThemedText>
-        </ThemedView>
+      <ScrollView
+        style={[styles.scroll, { backgroundColor: theme.background }]}
+        contentContainerStyle={styles.scrollContent}
+        contentInset={{ bottom: paddingBottom }}
+        contentInsetAdjustmentBehavior="automatic"
+      >
+        <ThemedView style={[styles.container, { paddingTop: insets.top }]}>
+          <ThemedText style={[styles.screenTitle, { color: theme.text }]}>You</ThemedText>
 
-        {showPinSetup && (
-          <GlassCard>
-            <ThemedText type="smallBold" style={styles.sectionTitle}>Set Up PIN</ThemedText>
-            <TextInput
-              style={[styles.pinInput, { color: theme.text, backgroundColor: theme.background }]}
-              value={newPin}
-              onChangeText={setNewPin}
-              placeholder="Enter PIN (4-6 digits)"
-              placeholderTextColor={theme.textSecondary}
-              keyboardType="number-pad"
-              secureTextEntry
-              maxLength={6}
-            />
-            <TextInput
-              style={[styles.pinInput, { color: theme.text, backgroundColor: theme.background }]}
-              value={confirmPin}
-              onChangeText={setConfirmPin}
-              placeholder="Confirm PIN"
-              placeholderTextColor={theme.textSecondary}
-              keyboardType="number-pad"
-              secureTextEntry
-              maxLength={6}
-            />
-            <View style={styles.pinActions}>
-              <Pressable
-                style={({ pressed }) => [styles.pinButton, { backgroundColor: theme.backgroundElement }, pressed && { opacity: 0.7 }]}
-                onPress={() => { setShowPinSetup(false); setNewPin(''); setConfirmPin(''); }}
-              >
-                <ThemedText type="small">Cancel</ThemedText>
-              </Pressable>
-              <Pressable
-                style={({ pressed }) => [styles.pinButton, { backgroundColor: theme.primary }, pressed && { opacity: 0.7 }]}
-                onPress={handlePinSetup}
-              >
-                <ThemedText type="small" style={{ color: '#FFF' }}>Set PIN</ThemedText>
-              </Pressable>
+          <ThemedView style={[styles.profileHeader, { backgroundColor: theme.backgroundElement }]}>
+            <ThemedView style={[styles.avatar, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
+              <Icon name={activeProfile?.avatar || 'user'} size={24} color={theme.textSecondary} />
+            </ThemedView>
+            <View style={styles.profileInfo}>
+              <ThemedText type="default" style={{ fontWeight: '600' }}>
+                {activeProfile?.name || 'Guest'}
+              </ThemedText>
             </View>
-          </GlassCard>
-        )}
-
-        {/* General */}
-        <GlassCard>
-          <ThemedText type="smallBold" style={styles.sectionTitle}>General</ThemedText>
-          <Toggle label="Compact" value={compactMode} onValueChange={setCompactMode} icon={IconLayoutGrid} />
-          <Toggle label="Ratings" value={showRatings} onValueChange={setShowRatings} icon={IconEye} />
-          <Toggle label="Haptics" value={hapticFeedback} onValueChange={setHapticFeedback} icon={IconBell} />
-          <SettingRow
-            label="Default View"
-            value={defaultListView === 'grid' ? 'Grid' : 'List'}
-            icon={IconLayoutGrid}
-            onPress={() => {
-              Alert.alert('Default View', 'Choose your default view', [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'Grid', onPress: () => setDefaultListView('grid') },
-                { text: 'List', onPress: () => setDefaultListView('list') },
-              ]);
-            }}
-          />
-        </GlassCard>
-
-        {/* Appearance */}
-        <GlassCard>
-          <ThemedText type="smallBold" style={styles.sectionTitle}>Appearance</ThemedText>
-          <View style={styles.themeGrid}>
-            {themeOptions.map((opt) => {
-              const active = themePref === opt.key;
-              return (
-                <Pressable
-                  key={opt.key}
-                  style={({ pressed }) => [
-                    styles.themeSwatch,
-                    {
-                      borderColor: active ? theme.primary : 'transparent',
-                      borderWidth: active ? 2 : 0,
-                    },
-                    pressed && { opacity: 0.7 },
-                  ]}
-                  onPress={() => setThemePref(opt.key)}
-                >
-                  <View
-                    style={[
-                      styles.themeSwatchInner,
-                      {
-                        backgroundColor: opt.colors[0],
-                        borderColor: opt.colors[1],
-                      },
-                    ]}
-                  />
-                </Pressable>
-              );
-            })}
-          </View>
-        </GlassCard>
-
-        {/* Profiles */}
-        {profiles.length > 1 && (
-          <GlassCard>
-            <ThemedText type="smallBold" style={styles.sectionTitle}>Profiles</ThemedText>
-            {profiles.map((p) => (
-              <Pressable
-                key={p.id}
-                style={({ pressed }) => [
-                  styles.profileRow,
-                  { backgroundColor: theme.background },
-                  p.isActive && { borderColor: theme.primary, borderWidth: 1 },
-                  pressed && { opacity: 0.7 },
-                ]}
-                onPress={() => handleSwitchProfile(p.id)}
-              >
-                <Icon name={p.avatar || 'user'} size={24} color={theme.text} />
-                <ThemedText type="small" style={styles.profileName}>{p.name}</ThemedText>
-                {p.isActive && <Icon name="check" size={14} color={theme.primary} />}
-              </Pressable>
-            ))}
-            <ActionRow label="Manage Profiles" icon={IconUser} onPress={() => router.push('/profile')} />
-          </GlassCard>
-        )}
-
-        {/* Security */}
-        <GlassCard>
-          <ThemedText type="smallBold" style={styles.sectionTitle}>Security</ThemedText>
-          <Toggle label="App Lock" value={lockEnabled} onValueChange={handleLockToggle} icon={IconLock} />
-          {lockEnabled && bioAvailable && (
-            <Toggle label="Biometric" value={biometricEnabled} onValueChange={handleBiometricToggle} icon={IconFingerprint} />
-          )}
-          {lockEnabled && pinConfigured && (
-            <ActionRow label="Remove PIN" icon={IconTrash} danger onPress={handleRemovePin} />
-          )}
-        </GlassCard>
-
-        {/* Notifications */}
-        <GlassCard>
-          <ThemedText type="smallBold" style={styles.sectionTitle}>Notifications</ThemedText>
-          <Toggle label="Notifications" value={notificationsEnabled} onValueChange={handleNotificationsToggle} icon={IconBell} />
-          {notificationsEnabled && (
-            <>
-              <Toggle label="Continue" value={continueReminder} onValueChange={handleContinueReminderToggle} icon={IconPlayerPlay} />
-              <Toggle label="Daily Goal" value={dailyGoal} onValueChange={handleDailyGoalToggle} icon={IconAward} />
-              <Toggle label="Weekly" value={weeklySummary} onValueChange={handleWeeklySummaryToggle} icon={IconTrendingUp} />
-              <Toggle label="Streaks" value={streakReminder} onValueChange={handleStreakReminderToggle} icon={IconRefresh} />
-              <Toggle label="Backup" value={backupReminder} onValueChange={handleBackupReminderToggle} icon={IconDatabase} />
-              <Toggle label="Releases" value={releaseReminder} onValueChange={handleReleaseReminderToggle} icon={IconCalendar} />
-            </>
-          )}
-        </GlassCard>
-
-        {/* Playback */}
-        <GlassCard>
-          <ThemedText type="smallBold" style={styles.sectionTitle}>Playback</ThemedText>
-          <Toggle label="Auto-Play" value={autoPlay} onValueChange={setAutoPlay} icon={IconPlayerPlay} />
-          <Toggle label="Skip Intros" value={skipIntros} onValueChange={setSkipIntros} icon={IconPlayerSkipForward} />
-          <SettingRow
-            label="Quality"
-            value={qualityOptions.find((q) => q.key === playbackQuality)?.label || 'Auto'}
-            icon={IconMovie}
-            onPress={() => {
-              Alert.alert('Video Quality', 'Choose playback quality', [
-                { text: 'Cancel', style: 'cancel' },
-                ...qualityOptions.map((q) => ({
-                  text: q.label,
-                  onPress: () => setPlaybackQuality(q.key),
-                })),
-              ]);
-            }}
-          />
-        </GlassCard>
-
-        {/* Language */}
-        <GlassCard>
-          <ThemedText type="smallBold" style={styles.sectionTitle}>Language</ThemedText>
-          <SettingRow
-            label="Language"
-            value={languageOptions.find((l) => l.key === language)?.label || 'EN'}
-            icon={IconWorld}
-            onPress={() => {
-              Alert.alert('Language', 'Choose app language', [
-                { text: 'Cancel', style: 'cancel' },
-                ...languageOptions.map((l) => ({
-                  text: l.label,
-                  onPress: () => setLanguage(l.key),
-                })),
-              ]);
-            }}
-          />
-        </GlassCard>
-
-        {/* Data */}
-        <GlassCard>
-          <ThemedText type="smallBold" style={styles.sectionTitle}>Data</ThemedText>
-          <Toggle label="Auto Backup" value={autoBackup} onValueChange={setAutoBackup} icon={IconDatabase} />
-          <ActionRow label="Backup & Restore" icon={IconDownload} onPress={() => router.push('/backup')} />
-          <ActionRow label="Import" icon={IconUpload} onPress={() => router.push('/import')} />
-          <ActionRow label="Clear Cache" icon={IconTrash} danger onPress={() => {
-            Alert.alert('Clear Cache', 'This will clear temporary files. Continue?', [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Clear', style: 'destructive', onPress: () => Alert.alert('Done', 'Cache cleared') },
-            ]);
-          }} />
-        </GlassCard>
-
-        {/* About */}
-        <GlassCard>
-          <ThemedText type="smallBold" style={styles.sectionTitle}>About</ThemedText>
-          <ActionRow label="Help" icon={IconHelp} onPress={() => Alert.alert('Help', 'Visit our help center at support.nextwatch.app')} />
-          <ActionRow label="About NextWatch" icon={IconInfoCircle} onPress={() => Alert.alert('About', 'NextWatch v1.0.0\nYour watchlist. Organized.\n\nBuilt for entertainment lovers.')} />
-          <ActionRow label="Reset Data" icon={IconTrash} danger onPress={() => {
-            Alert.alert('Reset All Data', 'This will permanently delete all your data. This action cannot be undone.', [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Delete Everything', style: 'destructive', onPress: () => Alert.alert('Done', 'Data reset') },
-            ]);
-          }} />
-          <ThemedView style={styles.versionRow}>
-            <ThemedText type="small" themeColor="textSecondary">v1.0.0</ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">Build 2026.08.01</ThemedText>
+            <Pressable
+              style={({ pressed }) => [styles.editProfileBtn, pressed && { opacity: 0.7 }]}
+              onPress={() => router.push('/profile')}
+            >
+              <IconEdit size={14} color={theme.primary} />
+              <ThemedText type="small" style={{ color: theme.primary }}>Edit Profile</ThemedText>
+            </Pressable>
           </ThemedView>
-        </GlassCard>
-      </ThemedView>
-    </ScrollView>
+
+          <ThemedView style={styles.statsRow}>
+            <ThemedView style={[styles.statCard, { backgroundColor: theme.backgroundElement }]}>
+              <ThemedText style={[styles.statValue, { color: theme.text }]}>{profiles.length}</ThemedText>
+              <ThemedText type="caption" themeColor="textSecondary">items</ThemedText>
+            </ThemedView>
+            <ThemedView style={[styles.statCard, { backgroundColor: theme.backgroundElement }]}>
+              <ThemedText style={[styles.statValue, { color: theme.text }]}>{profiles.length}</ThemedText>
+              <ThemedText type="caption" themeColor="textSecondary">completed</ThemedText>
+            </ThemedView>
+            <ThemedView style={[styles.statCard, { backgroundColor: theme.backgroundElement }]}>
+              <ThemedText style={[styles.statValue, { color: theme.text }]}>0</ThemedText>
+              <ThemedText type="caption" themeColor="textSecondary">hours</ThemedText>
+            </ThemedView>
+          </ThemedView>
+
+          {showPinSetup && (
+            <ThemedView style={styles.sectionContainer}>
+              <ThemedView style={[styles.sectionCard, { backgroundColor: theme.backgroundElement }]}>
+                <ThemedText type="smallBold" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+                  Set Up PIN
+                </ThemedText>
+                <TextInput
+                  style={[styles.pinInput, { color: theme.text, backgroundColor: theme.background }]}
+                  value={newPin}
+                  onChangeText={setNewPin}
+                  placeholder="Enter PIN (4-6 digits)"
+                  placeholderTextColor={theme.textSecondary}
+                  keyboardType="number-pad"
+                  secureTextEntry
+                  maxLength={6}
+                />
+                <TextInput
+                  style={[styles.pinInput, { color: theme.text, backgroundColor: theme.background }]}
+                  value={confirmPin}
+                  onChangeText={setConfirmPin}
+                  placeholder="Confirm PIN"
+                  placeholderTextColor={theme.textSecondary}
+                  keyboardType="number-pad"
+                  secureTextEntry
+                  maxLength={6}
+                />
+                <View style={styles.pinActions}>
+                  <Pressable
+                    style={({ pressed }) => [styles.pinButton, { backgroundColor: theme.background }, pressed && { opacity: 0.7 }]}
+                    onPress={() => { setShowPinSetup(false); setNewPin(''); setConfirmPin(''); }}
+                  >
+                    <ThemedText type="small">Cancel</ThemedText>
+                  </Pressable>
+                  <Pressable
+                    style={({ pressed }) => [styles.pinButton, { backgroundColor: theme.primary }, pressed && { opacity: 0.7 }]}
+                    onPress={handlePinSetup}
+                  >
+                    <ThemedText type="small" style={{ color: '#FFF' }}>Set PIN</ThemedText>
+                  </Pressable>
+                </View>
+              </ThemedView>
+            </ThemedView>
+          )}
+
+          <ThemedView style={styles.sectionContainer}>
+            <ThemedText style={[styles.sectionTitle, { color: theme.textSecondary }]}>General</ThemedText>
+            <ThemedView style={[styles.sectionCard, { backgroundColor: theme.backgroundElement }]}>
+              <Toggle label="Compact" value={compactMode} onValueChange={setCompactMode} icon={IconLayoutGrid} />
+              <Toggle label="Ratings" value={showRatings} onValueChange={setShowRatings} icon={IconEye} />
+              <Toggle label="Haptics" value={hapticFeedback} onValueChange={setHapticFeedback} icon={IconBell} />
+              <SettingRow
+                label="Default View"
+                value={defaultListView === 'grid' ? 'Grid' : 'List'}
+                icon={IconLayoutGrid}
+                onPress={() => {
+                  Alert.alert('Default View', 'Choose your default view', [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Grid', onPress: () => setDefaultListView('grid') },
+                    { text: 'List', onPress: () => setDefaultListView('list') },
+                  ]);
+                }}
+              />
+            </ThemedView>
+          </ThemedView>
+
+          <ThemedView style={styles.sectionContainer}>
+            <ThemedText style={[styles.sectionTitle, { color: theme.textSecondary }]}>Appearance</ThemedText>
+            <ThemedView style={[styles.sectionCard, { backgroundColor: theme.backgroundElement }]}>
+              <View style={styles.themeGrid}>
+                {themeOptions.map((opt) => {
+                  const active = themePref === opt.key;
+                  return (
+                    <Pressable
+                      key={opt.key}
+                      style={({ pressed }) => [
+                        styles.themeSwatch,
+                        {
+                          borderColor: active ? theme.primary : 'transparent',
+                          borderWidth: active ? 2 : 0,
+                        },
+                        pressed && { opacity: 0.7 },
+                      ]}
+                      onPress={() => setThemePref(opt.key)}
+                    >
+                      <View
+                        style={[
+                          styles.themeSwatchInner,
+                          {
+                            backgroundColor: opt.colors[0],
+                            borderColor: opt.colors[1],
+                          },
+                        ]}
+                      />
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </ThemedView>
+          </ThemedView>
+
+          {profiles.length > 1 && (
+            <ThemedView style={styles.sectionContainer}>
+              <ThemedText style={[styles.sectionTitle, { color: theme.textSecondary }]}>Profiles</ThemedText>
+              <ThemedView style={[styles.sectionCard, { backgroundColor: theme.backgroundElement }]}>
+                {profiles.map((p) => (
+                  <Pressable
+                    key={p.id}
+                    style={({ pressed }) => [
+                      styles.profileRow,
+                      p.isActive && { borderColor: theme.primary, borderWidth: 1 },
+                      pressed && { opacity: 0.7 },
+                    ]}
+                    onPress={() => handleSwitchProfile(p.id)}
+                  >
+                    <Icon name={p.avatar || 'user'} size={24} color={theme.text} />
+                    <ThemedText type="small" style={styles.profileName}>{p.name}</ThemedText>
+                    {p.isActive && <Icon name="check" size={14} color={theme.primary} />}
+                  </Pressable>
+                ))}
+                <ActionRow label="Manage Profiles" icon={IconUser} onPress={() => router.push('/profile')} />
+              </ThemedView>
+            </ThemedView>
+          )}
+
+          <ThemedView style={styles.sectionContainer}>
+            <ThemedText style={[styles.sectionTitle, { color: theme.textSecondary }]}>Security</ThemedText>
+            <ThemedView style={[styles.sectionCard, { backgroundColor: theme.backgroundElement }]}>
+              <Toggle label="App Lock" value={lockEnabled} onValueChange={handleLockToggle} icon={IconLock} />
+              {lockEnabled && bioAvailable && (
+                <Toggle label="Biometric" value={biometricEnabled} onValueChange={handleBiometricToggle} icon={IconFingerprint} />
+              )}
+              {lockEnabled && pinConfigured && (
+                <ActionRow label="Remove PIN" icon={IconTrash} danger onPress={handleRemovePin} />
+              )}
+            </ThemedView>
+          </ThemedView>
+
+          <ThemedView style={styles.sectionContainer}>
+            <ThemedText style={[styles.sectionTitle, { color: theme.textSecondary }]}>Notifications</ThemedText>
+            <ThemedView style={[styles.sectionCard, { backgroundColor: theme.backgroundElement }]}>
+              <Toggle label="Notifications" value={notificationsEnabled} onValueChange={handleNotificationsToggle} icon={IconBell} />
+              {notificationsEnabled && (
+                <>
+                  <Toggle label="Continue" value={continueReminder} onValueChange={handleContinueReminderToggle} icon={IconPlayerPlay} />
+                  <Toggle label="Daily Goal" value={dailyGoal} onValueChange={handleDailyGoalToggle} icon={IconAward} />
+                  <Toggle label="Weekly" value={weeklySummary} onValueChange={handleWeeklySummaryToggle} icon={IconTrendingUp} />
+                  <Toggle label="Streaks" value={streakReminder} onValueChange={handleStreakReminderToggle} icon={IconRefresh} />
+                  <Toggle label="Backup" value={backupReminder} onValueChange={handleBackupReminderToggle} icon={IconDatabase} />
+                  <Toggle label="Releases" value={releaseReminder} onValueChange={handleReleaseReminderToggle} icon={IconCalendar} />
+                </>
+              )}
+            </ThemedView>
+          </ThemedView>
+
+          <ThemedView style={styles.sectionContainer}>
+            <ThemedText style={[styles.sectionTitle, { color: theme.textSecondary }]}>Playback</ThemedText>
+            <ThemedView style={[styles.sectionCard, { backgroundColor: theme.backgroundElement }]}>
+              <Toggle label="Auto-Play" value={autoPlay} onValueChange={setAutoPlay} icon={IconPlayerPlay} />
+              <Toggle label="Skip Intros" value={skipIntros} onValueChange={setSkipIntros} icon={IconPlayerSkipForward} />
+              <SettingRow
+                label="Quality"
+                value={qualityOptions.find((q) => q.key === playbackQuality)?.label || 'Auto'}
+                icon={IconMovie}
+                onPress={() => {
+                  Alert.alert('Video Quality', 'Choose playback quality', [
+                    { text: 'Cancel', style: 'cancel' },
+                    ...qualityOptions.map((q) => ({
+                      text: q.label,
+                      onPress: () => setPlaybackQuality(q.key),
+                    })),
+                  ]);
+                }}
+              />
+            </ThemedView>
+          </ThemedView>
+
+          <ThemedView style={styles.sectionContainer}>
+            <ThemedText style={[styles.sectionTitle, { color: theme.textSecondary }]}>Language</ThemedText>
+            <ThemedView style={[styles.sectionCard, { backgroundColor: theme.backgroundElement }]}>
+              <SettingRow
+                label="Language"
+                value={languageOptions.find((l) => l.key === language)?.label || 'EN'}
+                icon={IconWorld}
+                onPress={() => {
+                  Alert.alert('Language', 'Choose app language', [
+                    { text: 'Cancel', style: 'cancel' },
+                    ...languageOptions.map((l) => ({
+                      text: l.label,
+                      onPress: () => setLanguage(l.key),
+                    })),
+                  ]);
+                }}
+              />
+            </ThemedView>
+          </ThemedView>
+
+          <ThemedView style={styles.sectionContainer}>
+            <ThemedText style={[styles.sectionTitle, { color: theme.textSecondary }]}>Data</ThemedText>
+            <ThemedView style={[styles.sectionCard, { backgroundColor: theme.backgroundElement }]}>
+              <Toggle label="Auto Backup" value={autoBackup} onValueChange={setAutoBackup} icon={IconDatabase} />
+              <ActionRow label="Backup & Restore" icon={IconDownload} onPress={() => router.push('/backup')} />
+              <ActionRow label="Import" icon={IconUpload} onPress={() => router.push('/import')} />
+              <ActionRow
+                label="Clear Cache"
+                icon={IconTrash}
+                danger
+                onPress={() => {
+                  Alert.alert('Clear Cache', 'This will clear temporary files. Continue?', [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Clear', style: 'destructive', onPress: () => Alert.alert('Done', 'Cache cleared') },
+                  ]);
+                }}
+              />
+            </ThemedView>
+          </ThemedView>
+
+          <ThemedView style={styles.sectionContainer}>
+            <ThemedText style={[styles.sectionTitle, { color: theme.textSecondary }]}>About</ThemedText>
+            <ThemedView style={[styles.sectionCard, { backgroundColor: theme.backgroundElement }]}>
+              <ActionRow label="Help" icon={IconHelp} onPress={() => Alert.alert('Help', 'Visit our help center at support.nextwatch.app')} />
+              <ActionRow label="About NextWatch" icon={IconInfoCircle} onPress={() => Alert.alert('About', 'NextWatch v1.0.0\nYour watchlist. Organized.\n\nBuilt for entertainment lovers.')} />
+              <ActionRow
+                label="Reset Data"
+                icon={IconTrash}
+                danger
+                onPress={() => {
+                  Alert.alert('Reset All Data', 'This will permanently delete all your data. This action cannot be undone.', [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Delete Everything', style: 'destructive', onPress: () => Alert.alert('Done', 'Data reset') },
+                  ]);
+                }}
+              />
+              <ThemedView style={styles.versionRow}>
+                <ThemedText type="small" themeColor="textSecondary">v1.0.0</ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">Build 2026.08.01</ThemedText>
+              </ThemedView>
+            </ThemedView>
+          </ThemedView>
+        </ThemedView>
+      </ScrollView>
     </ErrorBoundary>
   );
 }
@@ -671,17 +724,62 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
     paddingBottom: Spacing.four,
   },
-  header: {
+  screenTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    paddingTop: Spacing.three,
+  },
+  profileHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.two,
-    paddingVertical: Spacing.three,
+    borderRadius: 16,
+    padding: 16,
+    gap: 12,
+  },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  profileInfo: {
+    flex: 1,
+  },
+  editProfileBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  statCard: {
+    flex: 1,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  sectionContainer: {
+    gap: 8,
   },
   sectionTitle: {
+    fontSize: 13,
+    fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: Spacing.one,
-    opacity: 0.6,
+    letterSpacing: 1,
+    paddingLeft: 4,
+  },
+  sectionCard: {
+    borderRadius: 16,
+    padding: 16,
   },
   toggleRow: {
     flexDirection: 'row',

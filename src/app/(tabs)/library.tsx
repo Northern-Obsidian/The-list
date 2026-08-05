@@ -1,20 +1,68 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import {
+  FlatList,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  type GestureResponderEvent,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 
-import { AnimatedList } from '@/components/animated-list';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Icon } from '@/components/ui/icon';
+import { FilterSegmentedTabs } from '@/components/ui/filter-segmented-tabs';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { useHaptics } from '@/hooks/use-haptics';
 import { useTheme } from '@/hooks/use-theme';
 import { LIST_OPTIMIZATION_PROPS } from '@/utils/performance';
 import { getDatabase } from '@/db';
 import { media } from '@/db/schema';
 
-const VIEW_MODES = ['grid', 'list'] as const;
+function ScalePressable({
+  children,
+  onPress,
+  onPressIn,
+  onPressOut,
+  style,
+  ...props
+}: {
+  children: React.ReactNode;
+  onPress?: (e: GestureResponderEvent) => void;
+  onPressIn?: (e: GestureResponderEvent) => void;
+  onPressOut?: (e: GestureResponderEvent) => void;
+  style?: StyleProp<ViewStyle>;
+} & Omit<React.ComponentProps<typeof Pressable>, 'onPress' | 'onPressIn' | 'onPressOut' | 'style'>) {
+  const scale = useSharedValue(1);
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <Pressable
+      onPressIn={(e) => {
+        scale.value = withSpring(0.95, { damping: 15, stiffness: 400 });
+        onPressIn?.(e);
+      }}
+      onPressOut={(e) => {
+        scale.value = withSpring(1, { damping: 15, stiffness: 400 });
+        onPressOut?.(e);
+      }}
+      onPress={onPress}
+      style={[style, animStyle as any]}
+      {...props}
+    >
+      {children}
+    </Pressable>
+  );
+}
+
 const SORT_OPTIONS = [
   { key: 'title', label: 'Title' },
   { key: 'year', label: 'Year' },
@@ -32,7 +80,7 @@ const TYPE_FILTERS = [
 export default function LibraryScreen() {
   const insets = useSafeAreaInsets();
   const theme = useTheme();
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const haptics = useHaptics();
   const [sortBy, setSortBy] = useState('title');
   const [typeFilter, setTypeFilter] = useState('');
   const [items, setItems] = useState<(typeof media.$inferSelect)[]>([]);
@@ -69,148 +117,216 @@ export default function LibraryScreen() {
   }, [items, typeFilter, sortBy]);
 
   const renderItem = useCallback(
-    (item: typeof media.$inferSelect, _index: number) => (
-      <Pressable
-        style={({ pressed }) => [
-          viewMode === 'list' ? styles.listItem : styles.gridItem,
+    ({ item }: { item: typeof media.$inferSelect }) => (
+      <ScalePressable
+        style={[
+          styles.card,
           { backgroundColor: theme.backgroundElement },
-          pressed && { opacity: 0.7 },
         ]}
-        onPress={() => router.push(`/media/${item.id}`)}
+        onPress={() => {
+          haptics.light();
+          router.push(`/media/${item.id}`);
+        }}
       >
-        <ThemedText type={viewMode === 'list' ? 'smallBold' : 'small'} numberOfLines={2}>
+        <ThemedText style={styles.cardTitle} numberOfLines={2}>
           {item.title}
         </ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          {item.mediaType.replace(/_/g, ' ')} {item.year ? `· ${item.year}` : ''}
+        <ThemedText style={[styles.cardSubtype, { color: theme.textSecondary }]}>
+          {item.mediaType.replace(/_/g, ' ')}
         </ThemedText>
-        {item.personalRating && (
-          <ThemedText type="small" themeColor="textSecondary">
-            ⭐ {item.personalRating}
-          </ThemedText>
-        )}
-      </Pressable>
+        {item.personalRating ? (
+          <View style={styles.cardRating}>
+            <Icon name="star" size={10} color={theme.textSecondary} />
+            <ThemedText style={[styles.cardRatingText, { color: theme.textSecondary }]}>
+              {item.personalRating}
+            </ThemedText>
+          </View>
+        ) : null}
+      </ScalePressable>
     ),
-    [theme, viewMode],
+    [theme, haptics],
   );
 
   const renderEmpty = useCallback(
     () => (
       <ThemedView style={styles.emptyState}>
-        <ThemedText type="subtitle" style={styles.emptyIcon}>📚</ThemedText>
-        <ThemedText type="title" style={styles.emptyTitle}>
+        <ThemedText style={styles.emptyIcon}>📚</ThemedText>
+        <ThemedText style={styles.emptyTitle}>
           Your library is empty
         </ThemedText>
-        <ThemedText themeColor="textSecondary" style={styles.emptyText}>
+        <ThemedText style={[styles.emptyText, { color: theme.textSecondary }]}>
           Start adding movies, shows, anime, and more to build your collection.
         </ThemedText>
       </ThemedView>
     ),
-    [],
+    [theme],
   );
 
   return (
     <ErrorBoundary name="LibraryScreen">
-    <ThemedView style={styles.container}>
-      <ThemedView style={[styles.content, { paddingTop: insets.top }]}>
-        <ThemedView style={styles.header}>
-          <ThemedText type="subtitle">Library</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            {sortedAndFiltered.length} items
-          </ThemedText>
-          <ThemedView style={styles.headerActions}>
-            {VIEW_MODES.map((mode) => (
-              <Pressable
-                key={mode}
-                style={({ pressed }) => [
-                  styles.viewToggle,
-                  { backgroundColor: viewMode === mode ? theme.backgroundSelected : 'transparent' },
-                  pressed && { opacity: 0.7 },
-                ]}
-                onPress={() => setViewMode(mode)}
-              >
-                <Icon name={mode === 'grid' ? 'layout-grid' : 'list'} size={16} color={viewMode === mode ? theme.text : theme.textSecondary} />
-              </Pressable>
-            ))}
+      <ThemedView style={styles.container}>
+        <ThemedView style={[styles.content, { paddingTop: insets.top }]}>
+          <ThemedView style={styles.header}>
+            <ThemedText style={styles.headerTitle}>Library</ThemedText>
+            <View style={[styles.countBadge, { backgroundColor: theme.backgroundElement }]}>
+              <ThemedText style={[styles.countText, { color: theme.textSecondary }]}>
+                {sortedAndFiltered.length}
+              </ThemedText>
+            </View>
           </ThemedView>
+
+          <FilterSegmentedTabs
+            items={TYPE_FILTERS}
+            selected={typeFilter}
+            onSelect={setTypeFilter}
+            style={styles.filterTabs}
+          />
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.sortScroll}
+            contentContainerStyle={styles.sortContent}
+          >
+            {SORT_OPTIONS.map((opt) => (
+              <ScalePressable
+                key={opt.key}
+                style={[
+                  styles.sortPill,
+                  { backgroundColor: sortBy === opt.key ? theme.backgroundSelected : theme.backgroundElement },
+                ]}
+                onPress={() => {
+                  haptics.light();
+                  setSortBy(opt.key);
+                }}
+              >
+                <ThemedText
+                  style={[
+                    styles.sortPillText,
+                    { color: sortBy === opt.key ? theme.text : theme.textSecondary },
+                  ]}
+                >
+                  {opt.label}
+                </ThemedText>
+              </ScalePressable>
+            ))}
+          </ScrollView>
+
+          <FlatList
+            data={sortedAndFiltered}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id}
+            numColumns={3}
+            contentContainerStyle={[
+              styles.listContent,
+              { paddingBottom: paddingBottom + Spacing.four },
+            ]}
+            columnWrapperStyle={styles.gridRow}
+            ListEmptyComponent={renderEmpty}
+            showsVerticalScrollIndicator={false}
+            {...LIST_OPTIMIZATION_PROPS}
+          />
         </ThemedView>
-
-        <View style={styles.filterRow}>
-          {TYPE_FILTERS.map((f) => (
-            <Pressable
-              key={f.key}
-              style={({ pressed }) => [
-                styles.filterChip,
-                {
-                  backgroundColor: typeFilter === f.key ? theme.backgroundSelected : theme.backgroundElement,
-                },
-                pressed && { opacity: 0.7 },
-              ]}
-              onPress={() => setTypeFilter(f.key)}
-            >
-              <ThemedText type="small" themeColor={typeFilter === f.key ? 'text' : 'textSecondary'}>
-                {f.label}
-              </ThemedText>
-            </Pressable>
-          ))}
-        </View>
-
-        <ThemedView style={styles.sortRow}>
-          <ThemedText type="small" themeColor="textSecondary">Sort by:</ThemedText>
-          {SORT_OPTIONS.map((opt) => (
-            <Pressable
-              key={opt.key}
-              style={({ pressed }) => [
-                styles.sortChip,
-                { backgroundColor: sortBy === opt.key ? theme.backgroundSelected : theme.backgroundElement },
-                pressed && { opacity: 0.7 },
-              ]}
-              onPress={() => setSortBy(opt.key)}
-            >
-              <ThemedText type="small" themeColor={sortBy === opt.key ? 'text' : 'textSecondary'}>
-                {opt.label}
-              </ThemedText>
-            </Pressable>
-          ))}
-        </ThemedView>
-
-        <AnimatedList
-          data={sortedAndFiltered}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          numColumns={viewMode === 'grid' ? 2 : 1}
-          contentContainerStyle={[
-            styles.listContent,
-            { paddingBottom: paddingBottom + Spacing.four },
-          ]}
-          columnWrapperStyle={viewMode === 'grid' ? styles.gridRow : undefined}
-          ListEmptyComponent={renderEmpty}
-          showsVerticalScrollIndicator={false}
-          staggerDelay={60}
-          {...LIST_OPTIMIZATION_PROPS}
-        />
       </ThemedView>
-    </ThemedView>
     </ErrorBoundary>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { flex: 1, paddingHorizontal: Spacing.four, maxWidth: MaxContentWidth, alignSelf: 'center', width: '100%' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: Spacing.three },
-  headerActions: { flexDirection: 'row', gap: Spacing.half },
-  viewToggle: { width: 36, height: 36, borderRadius: Spacing.two, justifyContent: 'center', alignItems: 'center' },
-  filterRow: { flexDirection: 'row', gap: Spacing.two, marginBottom: Spacing.two, flexWrap: 'wrap' },
-  filterChip: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, borderRadius: 20 },
-  sortRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, marginBottom: Spacing.three },
-  sortChip: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.one, borderRadius: Spacing.three },
-  listContent: { flexGrow: 1, gap: Spacing.two },
-  gridRow: { gap: Spacing.two },
-  listItem: { padding: Spacing.four, borderRadius: Spacing.three, gap: Spacing.half },
-  gridItem: { flex: 1, padding: Spacing.three, borderRadius: Spacing.three, gap: Spacing.half },
-  emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: Spacing.six, gap: Spacing.three },
-  emptyIcon: { fontSize: 64 },
-  emptyTitle: { fontSize: 24, textAlign: 'center' },
-  emptyText: { textAlign: 'center', paddingHorizontal: Spacing.four },
+  content: {
+    flex: 1,
+    paddingHorizontal: Spacing.four,
+    maxWidth: MaxContentWidth,
+    alignSelf: 'center',
+    width: '100%',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: Spacing.three,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  countBadge: {
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.half,
+    borderRadius: Spacing.two,
+  },
+  countText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  filterTabs: {
+    marginBottom: Spacing.two,
+  },
+  sortScroll: {
+    flexGrow: 0,
+    marginBottom: Spacing.three,
+  },
+  sortContent: {
+    gap: Spacing.two,
+  },
+  sortPill: {
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.one,
+    borderRadius: 20,
+  },
+  sortPillText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  listContent: {
+    flexGrow: 1,
+  },
+  gridRow: {
+    gap: Spacing.two,
+  },
+  card: {
+    flex: 1,
+    padding: 10,
+    borderRadius: 12,
+    marginBottom: Spacing.two,
+    aspectRatio: 1,
+    justifyContent: 'flex-end',
+  },
+  cardTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  cardSubtype: {
+    fontSize: 10,
+    textTransform: 'capitalize',
+    marginTop: Spacing.half,
+  },
+  cardRating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    marginTop: Spacing.one,
+  },
+  cardRatingText: {
+    fontSize: 10,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: Spacing.six,
+    gap: Spacing.three,
+  },
+  emptyIcon: {
+    fontSize: 64,
+  },
+  emptyTitle: {
+    fontSize: 24,
+    textAlign: 'center',
+  },
+  emptyText: {
+    textAlign: 'center',
+    paddingHorizontal: Spacing.four,
+  },
 });

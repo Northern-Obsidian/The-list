@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { eq } from 'drizzle-orm';
@@ -13,6 +14,7 @@ import { ErrorBoundary } from '@/components/error-boundary';
 import { ScreenLoader } from '@/components/ui/screen-loader';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useHaptics } from '@/hooks/use-haptics';
 import { getDatabase, getActiveProfileId } from '@/db';
 import { media, ratings, series } from '@/db/schema';
 import { getMediaById, getSeriesById } from '@/db/queries';
@@ -21,12 +23,27 @@ import { getWatchLinks, saveWatchLinks, type WatchLink } from '@/services/watch-
 import { generateId } from '@/utils/generate-id';
 import { SERIES_TYPES } from '@/types/media';
 
-
+function ScalePressable({ children, onPress, style }: { children: React.ReactNode; onPress?: () => void; style?: any }) {
+  const scale = useSharedValue(1);
+  const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  return (
+    <Animated.View style={[style, animStyle]}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={() => { scale.value = withSpring(0.95, { damping: 15, stiffness: 400 }); }}
+        onPressOut={() => { scale.value = withSpring(1, { damping: 15, stiffness: 400 }); }}
+      >
+        {children}
+      </Pressable>
+    </Animated.View>
+  );
+}
 
 export default function MediaDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const theme = useTheme();
+  const haptics = useHaptics();
   const [item, setItem] = useState<(typeof media.$inferSelect) | null>(null);
   const [seriesData, setSeriesData] = useState<typeof series.$inferSelect | null>(null);
   const [ratingData, setRatingData] = useState<typeof ratings.$inferSelect | null>(null);
@@ -125,121 +142,146 @@ export default function MediaDetailScreen() {
 
   return (
     <ErrorBoundary name="MediaDetailScreen">
-    <ScrollView style={[styles.scroll, { backgroundColor: theme.background }]} contentContainerStyle={styles.scrollContent}>
-      <ThemedView style={[styles.container, { paddingTop: insets.top }]}>
-        <View style={styles.header}>
-          <Pressable onPress={() => router.back()}>
-            <ThemedText type="link">Back</ThemedText>
-          </Pressable>
-          <Pressable onPress={() => router.push(`/media/${id}/edit`)}>
-            <ThemedText type="link">Edit</ThemedText>
-          </Pressable>
-        </View>
+      <ScrollView style={[styles.scroll, { backgroundColor: theme.background }]} contentContainerStyle={styles.scrollContent}>
+        <ThemedView style={[styles.container, { paddingTop: insets.top }]}>
+          <View style={styles.hero}>
+            <View style={[styles.heroBackdrop, { backgroundColor: theme.backgroundTertiary }]}>
+              <Icon name={iconForMediaType(item.mediaType)} size={80} color={theme.textSecondary} />
+            </View>
 
-        <ThemedView style={styles.hero}>
-          <Icon name={iconForMediaType(item.mediaType)} size={80} color={theme.textSecondary} />
-          <Badge label={item.mediaType.replace(/_/g, ' ')} variant="filled" style={styles.typeBadge} />
-        </ThemedView>
+            <View style={[styles.heroTopLeft, { top: insets.top + 8 }]}>
+              <Pressable style={[styles.circleBtn, { backgroundColor: theme.overlay }]} onPress={() => { haptics.light(); router.back(); }}>
+                <Icon name="arrow-left" size={20} color="#FFF" />
+              </Pressable>
+            </View>
+            <View style={[styles.heroTopRight, { top: insets.top + 8 }]}>
+              <Pressable style={[styles.circleBtn, { backgroundColor: theme.overlay }]} onPress={() => { haptics.light(); router.push(`/media/${id}/edit`); }}>
+                <Icon name="pencil" size={20} color="#FFF" />
+              </Pressable>
+            </View>
 
-        <ThemedText type="subtitle">{item.title}</ThemedText>
-
-        {item.overview && <ThemedText themeColor="textSecondary">{item.overview}</ThemedText>}
-
-        {isSeriesType && seriesData && (
-          <ThemedView type="backgroundElement" style={styles.section}>
-            <ThemedText type="smallBold" style={styles.sectionTitle}>Progress</ThemedText>
-            <ProgressBar progress={seriesProgress} color={theme.primary} />
-            <ThemedText type="small" themeColor="textSecondary">
-              {seriesData.completedEpisodes || 0} of {seriesData.totalEpisodes || 0} episodes
-            </ThemedText>
-          </ThemedView>
-        )}
-
-        {isSeriesType && (
-          <Pressable
-            style={({ pressed }) => [styles.seriesLink, { backgroundColor: theme.primary }, pressed && { opacity: 0.7 }]}
-            onPress={() => router.push(`/series/${id}`)}
-          >
-            <ThemedText style={{ color: '#FFF', fontWeight: '600' }}> View Series Progress</ThemedText>
-          </Pressable>
-        )}
-
-        <ThemedView style={styles.ratingRow}>
-          <Pressable
-            style={({ pressed }) => [styles.ratingBtn, { backgroundColor: theme.backgroundElement }, ratingData?.heart && { backgroundColor: theme.error }, pressed && { opacity: 0.7 }]}
-            onPress={() => handleRatingToggle('heart')}
-          >
-            <Icon name="heart" size={24} color={ratingData?.heart ? '#FFF' : theme.textSecondary} />
-          </Pressable>
-          <Pressable
-            style={({ pressed }) => [styles.ratingBtn, { backgroundColor: theme.backgroundElement }, ratingData?.thumbsUp && { backgroundColor: theme.primary }, pressed && { opacity: 0.7 }]}
-            onPress={() => handleRatingToggle('thumbsUp')}
-          >
-            <Icon name="thumb-up" size={24} color={ratingData?.thumbsUp ? '#FFF' : theme.textSecondary} />
-          </Pressable>
-          <Pressable
-            style={({ pressed }) => [styles.ratingBtn, { backgroundColor: theme.backgroundElement }, ratingData?.masterpiece && { backgroundColor: theme.warning }, pressed && { opacity: 0.7 }]}
-            onPress={() => handleRatingToggle('masterpiece')}
-          >
-            <Icon name="trophy" size={24} color={ratingData?.masterpiece ? '#FFF' : theme.textSecondary} />
-          </Pressable>
-          <Pressable
-            style={({ pressed }) => [styles.ratingBtn, { backgroundColor: theme.backgroundElement }, ratingData?.needRewatch && { backgroundColor: theme.success }, pressed && { opacity: 0.7 }]}
-            onPress={() => handleRatingToggle('needRewatch')}
-          >
-            <Icon name="refresh" size={24} color={ratingData?.needRewatch ? '#FFF' : theme.textSecondary} />
-          </Pressable>
-        </ThemedView>
-
-        {item.genres && (
-          <View style={styles.genresRow}>
-            {(JSON.parse(item.genres) as string[]).map((g) => (
-              <Badge key={g} label={g} variant="outlined" />
-            ))}
-          </View>
-        )}
-
-        <View style={styles.metaRow}>
-          {item.year && <ThemedText type="small" themeColor="textSecondary">{item.year}</ThemedText>}
-          {item.runtime && <ThemedText type="small" themeColor="textSecondary">{item.runtime} min</ThemedText>}
-          {item.personalRating && <ThemedText type="small" themeColor="textSecondary">{item.personalRating}/10</ThemedText>}
-          {seriesData?.airStatus && (
             <Badge
-              label={seriesData.airStatus === 'airing' ? 'Airing' : seriesData.airStatus === 'completed' ? 'Completed' : 'Upcoming'}
+              label={item.mediaType.replace(/_/g, ' ')}
               variant="filled"
-              color={seriesData.airStatus === 'airing' ? '#34D399' : seriesData.airStatus === 'completed' ? '#3C9FFE' : '#FBBF24'}
+              style={[styles.typeBadge, { backgroundColor: theme.primary }]}
             />
+
+            <View style={styles.heroTitleOverlay}>
+              <ThemedText style={styles.heroTitle}>{item.title}</ThemedText>
+            </View>
+          </View>
+
+          <View style={styles.infoSection}>
+            <View style={styles.metaRow}>
+              {item.year && <ThemedText style={[styles.metaText, { color: theme.textSecondary }]}>{item.year}</ThemedText>}
+              {item.year && <ThemedText style={{ color: theme.textSecondary }}>·</ThemedText>}
+              {item.runtime && <ThemedText style={[styles.metaText, { color: theme.textSecondary }]}>{item.runtime} min</ThemedText>}
+              {item.runtime && <ThemedText style={{ color: theme.textSecondary }}>·</ThemedText>}
+              {item.personalRating && <ThemedText style={[styles.metaText, { color: theme.textSecondary }]}>{item.personalRating}/10</ThemedText>}
+              {seriesData?.airStatus && (
+                <Badge
+                  label={seriesData.airStatus === 'airing' ? 'Airing' : seriesData.airStatus === 'completed' ? 'Completed' : 'Upcoming'}
+                  variant="filled"
+                  color={seriesData.airStatus === 'airing' ? theme.success : seriesData.airStatus === 'completed' ? theme.info : theme.warning}
+                />
+              )}
+            </View>
+
+            {item.genres && (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.genresScroll} contentContainerStyle={styles.genresRow}>
+                {(JSON.parse(item.genres) as string[]).map((g) => (
+                  <View key={g} style={[styles.genreChip, { backgroundColor: theme.backgroundElement }]}>
+                    <ThemedText style={[styles.genreChipText, { color: theme.text }]}>{g}</ThemedText>
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+
+            {item.overview && (
+              <ThemedText style={[styles.overviewText, { color: theme.textSecondary }]}>{item.overview}</ThemedText>
+            )}
+
+            {item.director && <ThemedText style={[styles.metaText, { color: theme.textSecondary }]}>Director: {item.director}</ThemedText>}
+            {item.actors && <ThemedText style={[styles.metaText, { color: theme.textSecondary }]}>Actors: {item.actors}</ThemedText>}
+          </View>
+
+          <View style={styles.ratingRow}>
+            <ScalePressable
+              style={[styles.ratingBtn, { backgroundColor: ratingData?.heart ? theme.error : theme.backgroundElement }]}
+              onPress={() => { haptics.light(); handleRatingToggle('heart'); }}
+            >
+              <Icon name="heart" size={24} color={ratingData?.heart ? '#FFF' : theme.textSecondary} />
+            </ScalePressable>
+            <ScalePressable
+              style={[styles.ratingBtn, { backgroundColor: ratingData?.thumbsUp ? theme.primary : theme.backgroundElement }]}
+              onPress={() => { haptics.light(); handleRatingToggle('thumbsUp'); }}
+            >
+              <Icon name="thumb-up" size={24} color={ratingData?.thumbsUp ? '#FFF' : theme.textSecondary} />
+            </ScalePressable>
+            <ScalePressable
+              style={[styles.ratingBtn, { backgroundColor: ratingData?.masterpiece ? theme.warning : theme.backgroundElement }]}
+              onPress={() => { haptics.light(); handleRatingToggle('masterpiece'); }}
+            >
+              <Icon name="trophy" size={24} color={ratingData?.masterpiece ? '#FFF' : theme.textSecondary} />
+            </ScalePressable>
+            <ScalePressable
+              style={[styles.ratingBtn, { backgroundColor: ratingData?.needRewatch ? theme.success : theme.backgroundElement }]}
+              onPress={() => { haptics.light(); handleRatingToggle('needRewatch'); }}
+            >
+              <Icon name="refresh" size={24} color={ratingData?.needRewatch ? '#FFF' : theme.textSecondary} />
+            </ScalePressable>
+          </View>
+
+          {isSeriesType && seriesData && (
+            <ThemedView type="backgroundElement" style={styles.section}>
+              <ThemedText style={[styles.sectionTitle, { color: theme.textSecondary }]}>Progress</ThemedText>
+              <ProgressBar progress={seriesProgress} color={theme.primary} />
+              <ThemedText style={[styles.metaText, { color: theme.textSecondary }]}>
+                {seriesData.completedEpisodes || 0} of {seriesData.totalEpisodes || 0} episodes
+              </ThemedText>
+              <Pressable
+                style={({ pressed }) => [styles.seriesLinkBtn, { backgroundColor: theme.primary }, pressed && { opacity: 0.7 }]}
+                onPress={() => router.push(`/series/${id}`)}
+              >
+                <ThemedText style={styles.seriesLinkText}>View Series Progress</ThemedText>
+              </Pressable>
+            </ThemedView>
           )}
-        </View>
 
-        {item.director && <ThemedText type="small" themeColor="textSecondary">Director: {item.director}</ThemedText>}
-        {item.actors && <ThemedText type="small" themeColor="textSecondary">Actors: {item.actors}</ThemedText>}
+          <WatchProviderLinks links={watchLinks} onAdd={handleAddWatchLink} onRemove={handleRemoveWatchLink} />
 
-        <WatchProviderLinks links={watchLinks} onAdd={handleAddWatchLink} onRemove={handleRemoveWatchLink} />
+          {item.notes && (
+            <ThemedView type="backgroundElement" style={styles.section}>
+              <ThemedText style={styles.sectionTitle}>Notes</ThemedText>
+              <ThemedText>{item.notes}</ThemedText>
+            </ThemedView>
+          )}
 
-        {item.notes && (
-          <ThemedView type="backgroundElement" style={styles.notesSection}>
-            <ThemedText type="smallBold">Notes</ThemedText>
-            <ThemedText>{item.notes}</ThemedText>
-          </ThemedView>
-        )}
-
-        <View style={styles.actionRow}>
-          <Pressable style={({ pressed }) => [styles.actionBtn, { backgroundColor: theme.backgroundElement }, pressed && { opacity: 0.7 }]} onPress={() => router.push(`/media/${id}/review`)}>
-            <Icon name="edit" size={14} color={theme.text} />
-            <ThemedText type="small"> Review</ThemedText>
-          </Pressable>
-          <Pressable style={({ pressed }) => [styles.actionBtn, { backgroundColor: theme.backgroundElement }, pressed && { opacity: 0.7 }]} onPress={() => router.push(`/media/${id}/edit`)}>
-            <Icon name="pencil" size={14} color={theme.text} />
-            <ThemedText type="small"> Edit</ThemedText>
-          </Pressable>
-          <Pressable style={({ pressed }) => [styles.actionBtn, { backgroundColor: theme.error }, pressed && { opacity: 0.7 }]} onPress={handleDelete}>
-            <Icon name="trash" size={14} color="#FFF" />
-            <ThemedText style={{ color: '#FFF' }}> Delete</ThemedText>
-          </Pressable>
-        </View>
-      </ThemedView>
-    </ScrollView>
+          <View style={styles.actionRow}>
+            <ScalePressable
+              style={[styles.bottomActionBtn, { backgroundColor: theme.backgroundElement }]}
+              onPress={() => { haptics.light(); router.push(`/media/${id}/review`); }}
+            >
+              <Icon name="edit" size={14} color={theme.text} />
+              <ThemedText style={styles.bottomActionText}>Review</ThemedText>
+            </ScalePressable>
+            <ScalePressable
+              style={[styles.bottomActionBtn, { backgroundColor: theme.backgroundElement }]}
+              onPress={() => { haptics.light(); router.push(`/media/${id}/edit`); }}
+            >
+              <Icon name="pencil" size={14} color={theme.text} />
+              <ThemedText style={styles.bottomActionText}>Edit</ThemedText>
+            </ScalePressable>
+            <ScalePressable
+              style={[styles.bottomActionBtn, { backgroundColor: theme.error }]}
+              onPress={() => { haptics.light(); handleDelete(); }}
+            >
+              <Icon name="trash" size={14} color="#FFF" />
+              <ThemedText style={[styles.bottomActionText, { color: '#FFF' }]}>Delete</ThemedText>
+            </ScalePressable>
+          </View>
+        </ThemedView>
+      </ScrollView>
     </ErrorBoundary>
   );
 }
@@ -247,19 +289,30 @@ export default function MediaDetailScreen() {
 const styles = StyleSheet.create({
   scroll: { flex: 1 },
   scrollContent: { flexDirection: 'row', justifyContent: 'center' },
-  container: { flex: 1, paddingHorizontal: Spacing.four, maxWidth: MaxContentWidth, gap: Spacing.four, paddingBottom: Spacing.four },
-  header: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: Spacing.three },
-  hero: { height: 300, borderRadius: Spacing.four, backgroundColor: 'transparent', justifyContent: 'center', alignItems: 'center', position: 'relative' },
-
-  typeBadge: { position: 'absolute', top: Spacing.three, right: Spacing.three },
-  section: { padding: Spacing.four, borderRadius: Spacing.four, gap: Spacing.two },
-  sectionTitle: { textTransform: 'uppercase', letterSpacing: 1 },
-  seriesLink: { paddingVertical: Spacing.three, paddingHorizontal: Spacing.four, borderRadius: Spacing.three, alignItems: 'center' },
-  ratingRow: { flexDirection: 'row', gap: Spacing.three },
-  ratingBtn: { width: 52, height: 52, borderRadius: Spacing.three, justifyContent: 'center', alignItems: 'center' },
-  genresRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
-  metaRow: { flexDirection: 'row', gap: Spacing.three, flexWrap: 'wrap', alignItems: 'center' },
-  notesSection: { padding: Spacing.four, borderRadius: Spacing.four, gap: Spacing.two },
-  actionRow: { flexDirection: 'row', gap: Spacing.three },
-  actionBtn: { flex: 1, flexDirection: 'row', gap: Spacing.one, paddingVertical: Spacing.three, borderRadius: Spacing.three, alignItems: 'center', justifyContent: 'center' },
+  container: { flex: 1, paddingHorizontal: Spacing.four, maxWidth: MaxContentWidth, paddingBottom: Spacing.four },
+  hero: { position: 'relative', height: 300 },
+  heroBackdrop: { height: 300, justifyContent: 'center', alignItems: 'center' },
+  heroTopLeft: { position: 'absolute', left: 16 },
+  heroTopRight: { position: 'absolute', right: 16 },
+  circleBtn: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
+  typeBadge: { position: 'absolute', top: 16, right: 16, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4 },
+  heroTitleOverlay: { position: 'absolute', bottom: 16, left: 16 },
+  heroTitle: { fontSize: 22, fontWeight: '700', color: '#FFF' },
+  infoSection: { paddingHorizontal: Spacing.four, paddingTop: Spacing.four, gap: Spacing.three },
+  metaRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', alignItems: 'center' },
+  metaText: { fontSize: 13 },
+  genresScroll: { marginHorizontal: -Spacing.four },
+  genresRow: { paddingHorizontal: Spacing.four, gap: Spacing.two },
+  genreChip: { borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6 },
+  genreChipText: { fontSize: 12 },
+  overviewText: { fontSize: 14, lineHeight: 20 },
+  ratingRow: { flexDirection: 'row', gap: Spacing.three, paddingHorizontal: Spacing.four, paddingTop: Spacing.four },
+  ratingBtn: { width: 52, height: 52, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
+  section: { padding: Spacing.four, borderRadius: 16, gap: Spacing.two },
+  sectionTitle: { fontSize: 13, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 },
+  seriesLinkBtn: { paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
+  seriesLinkText: { color: '#FFF', fontWeight: '600' },
+  actionRow: { flexDirection: 'row', gap: Spacing.three, paddingHorizontal: Spacing.four, paddingTop: Spacing.four },
+  bottomActionBtn: { flex: 1, flexDirection: 'row', gap: 4, paddingVertical: 12, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  bottomActionText: { fontSize: 13 },
 });

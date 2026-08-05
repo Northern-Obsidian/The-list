@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
@@ -7,6 +7,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Icon } from '@/components/ui/icon';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { useHaptics } from '@/hooks/use-haptics';
 import { useTheme } from '@/hooks/use-theme';
 import {
   getUserAchievements,
@@ -33,6 +34,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 export default function AchievementsScreen() {
   const insets = useSafeAreaInsets();
   const theme = useTheme();
+  const haptics = useHaptics();
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [stats, setStats] = useState({ total: 0, unlocked: 0, percentage: 0 });
 
@@ -65,34 +67,41 @@ export default function AchievementsScreen() {
       return (
         <ThemedView
           type="backgroundElement"
-          style={[styles.achievementCard, isUnlocked && styles.unlockedCard]}
+          style={styles.achievementCard}
         >
-          <ThemedText style={styles.achievementIcon}>{item.icon}</ThemedText>
-          <View style={styles.achievementInfo}>
-            <ThemedText type="smallBold" style={!isUnlocked && item.isSecret ? { opacity: 0.4 } : undefined}>
-              {isUnlocked || !item.isSecret ? item.title : '???'}
-            </ThemedText>
-            <ThemedText type="small" themeColor="textSecondary" style={item.isSecret && !isUnlocked ? { opacity: 0.4 } : undefined}>
-              {isUnlocked || !item.isSecret ? item.description : 'Secret achievement'}
-            </ThemedText>
-            <View style={styles.progressRow}>
-              <View style={[styles.progressBar, { backgroundColor: theme.background }]}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    {
-                      width: `${Math.min(progress, 100)}%`,
-                      backgroundColor: isUnlocked ? theme.success : theme.primary,
-                    },
-                  ]}
-                />
-              </View>
-              <ThemedText type="small" themeColor="textSecondary">
-                {item.progressCurrent}/{item.progressTarget}
-              </ThemedText>
+          {isUnlocked && (
+            <View style={styles.checkBadge}>
+              <Icon name="check" size={16} color={theme.success} />
             </View>
+          )}
+          <ThemedText style={styles.achievementIcon}>{item.icon}</ThemedText>
+          <ThemedText
+            style={styles.achievementTitle}
+            numberOfLines={1}
+          >
+            {isUnlocked || !item.isSecret ? item.title : '???'}
+          </ThemedText>
+          <ThemedText
+            themeColor="textSecondary"
+            style={[styles.achievementDesc, item.isSecret && !isUnlocked ? { opacity: 0.4 } : undefined]}
+            numberOfLines={2}
+          >
+            {isUnlocked || !item.isSecret ? item.description : 'Secret achievement'}
+          </ThemedText>
+          <View style={[styles.miniProgress, { backgroundColor: theme.background }]}>
+            <View
+              style={[
+                styles.miniProgressFill,
+                {
+                  width: `${Math.min(progress, 100)}%`,
+                  backgroundColor: isUnlocked ? theme.success : theme.primary,
+                },
+              ]}
+            />
           </View>
-          {isUnlocked && <Icon name="check" size={20} color={theme.success} />}
+          <ThemedText style={styles.progressText} themeColor="textSecondary">
+            {item.progressCurrent}/{item.progressTarget}
+          </ThemedText>
         </ThemedView>
       );
     },
@@ -106,29 +115,34 @@ export default function AchievementsScreen() {
       contentInset={{ bottom: insets.bottom + Spacing.five }}
     >
       <ThemedView style={[styles.container, { paddingTop: insets.top }]}>
-        <ThemedView style={styles.header}>
-          <Pressable onPress={() => router.back()}>
-            <ThemedText type="link">Back</ThemedText>
+        <View style={styles.header}>
+          <Pressable onPress={() => { haptics.light(); router.back(); }} style={[styles.backButton, { backgroundColor: theme.backgroundElement }]}>
+            <Icon name="arrow-left" size={20} color={theme.text} />
           </Pressable>
-          <ThemedText type="subtitle">Achievements</ThemedText>
-          <View style={{ width: 50 }} />
-        </ThemedView>
+          <ThemedText type="title" style={styles.headerTitle}>Achievements</ThemedText>
+          <View style={{ width: 40 }} />
+        </View>
 
         <ThemedView type="backgroundElement" style={styles.statsCard}>
-          <ThemedText type="title" style={styles.statsNumber}>
+          <ThemedText style={styles.statsNumber}>
             {stats.unlocked}/{stats.total}
           </ThemedText>
-          <ThemedText themeColor="textSecondary">Achievements Unlocked</ThemedText>
-          <View style={[styles.progressBar, { backgroundColor: theme.background }]}>
-            <View
-              style={[
-                styles.progressFill,
-                {
-                  width: `${Math.round(stats.percentage * 100)}%`,
-                  backgroundColor: theme.primary,
-                },
-              ]}
-            />
+          <ThemedText themeColor="textSecondary" style={styles.statsLabel}>Achievements Unlocked</ThemedText>
+          <View style={styles.statsProgressContainer}>
+            <View style={[styles.progressBar, { backgroundColor: theme.background }]}>
+              <View
+                style={[
+                  styles.progressFill,
+                  {
+                    width: `${Math.round(stats.percentage * 100)}%`,
+                    backgroundColor: theme.primary,
+                  },
+                ]}
+              />
+            </View>
+            <ThemedText style={styles.statsPercentage} themeColor="textSecondary">
+              {Math.round(stats.percentage * 100)}%
+            </ThemedText>
           </View>
         </ThemedView>
 
@@ -136,14 +150,18 @@ export default function AchievementsScreen() {
           const unlocked = section.data.filter((a) => a.unlockedAt).length;
           return (
             <ThemedView key={section.title} style={styles.section}>
-              <ThemedText type="smallBold" style={styles.sectionTitle}>
+              <ThemedText themeColor="textSecondary" style={styles.sectionTitle}>
                 {section.title} ({unlocked}/{section.data.length})
               </ThemedText>
-              <View style={styles.achievementList}>
-                {section.data.map((ach) => (
-                  <View key={ach.key}>{renderAchievement({ item: ach })}</View>
-                ))}
-              </View>
+              <FlatList
+                data={section.data}
+                renderItem={renderAchievement}
+                keyExtractor={(item) => item.key}
+                numColumns={2}
+                columnWrapperStyle={styles.gridRow}
+                scrollEnabled={false}
+                ItemSeparatorComponent={() => <View style={{ height: Spacing.two }} />}
+              />
             </ThemedView>
           );
         })}
@@ -156,18 +174,88 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   scrollContent: { flexDirection: 'row', justifyContent: 'center' },
   container: { flex: 1, paddingHorizontal: Spacing.four, maxWidth: MaxContentWidth, gap: Spacing.four, paddingBottom: Spacing.four },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: Spacing.three },
-  statsCard: { borderRadius: Spacing.four, padding: Spacing.five, alignItems: 'center', gap: Spacing.two },
-  statsNumber: { fontSize: 48 },
-  progressBar: { width: '100%', height: 8, borderRadius: 4, overflow: 'hidden' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: Spacing.three,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  statsCard: {
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  statsNumber: {
+    fontSize: 48,
+    fontWeight: '700',
+  },
+  statsLabel: {
+    fontSize: 14,
+  },
+  statsProgressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    gap: Spacing.two,
+  },
+  statsPercentage: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  progressBar: { flex: 1, height: 8, borderRadius: 4, overflow: 'hidden' },
   progressFill: { height: '100%', borderRadius: 4 },
   section: { gap: Spacing.three },
-  sectionTitle: { textTransform: 'uppercase', letterSpacing: 1 },
-  achievementList: { gap: Spacing.two },
-  achievementCard: { flexDirection: 'row', alignItems: 'center', padding: Spacing.three, borderRadius: Spacing.three, gap: Spacing.three },
-  unlockedCard: { opacity: 0.9 },
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  gridRow: {
+    gap: Spacing.two,
+  },
+  achievementCard: {
+    flex: 1,
+    borderRadius: 12,
+    padding: 12,
+    gap: 8,
+  },
+  checkBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+  },
   achievementIcon: { fontSize: 28 },
-  achievementInfo: { flex: 1, gap: Spacing.half },
-  progressRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
-  unlockedBadge: { fontSize: 20 },
+  achievementTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  achievementDesc: {
+    fontSize: 11,
+  },
+  miniProgress: {
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  miniProgressFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  progressText: {
+    fontSize: 10,
+  },
 });

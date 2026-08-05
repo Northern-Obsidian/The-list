@@ -4,15 +4,21 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  TextInput,
   View,
+  type GestureResponderEvent,
+  type StyleProp,
+  type ViewStyle,
 } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { SearchBar } from '@/components/ui/search-bar';
+import { FilterSegmentedTabs } from '@/components/ui/filter-segmented-tabs';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { useHaptics } from '@/hooks/use-haptics';
 import { useTheme } from '@/hooks/use-theme';
 import { fuzzySearch } from '@/services/fuzzy-search';
 import { getDatabase } from '@/db';
@@ -20,19 +26,55 @@ import { media, mediaTags } from '@/db/schema';
 import { getAllTags } from '@/db/queries';
 import { MediaCard, type MediaCardItem } from '@/components/media/media-card';
 
+function ScalePressable({
+  children,
+  onPress,
+  onPressIn,
+  onPressOut,
+  style,
+  ...props
+}: {
+  children: React.ReactNode;
+  onPress?: (e: GestureResponderEvent) => void;
+  onPressIn?: (e: GestureResponderEvent) => void;
+  onPressOut?: (e: GestureResponderEvent) => void;
+  style?: StyleProp<ViewStyle>;
+} & Omit<React.ComponentProps<typeof Pressable>, 'onPress' | 'onPressIn' | 'onPressOut' | 'style'>) {
+  const scale = useSharedValue(1);
+  const animStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <Pressable
+      onPressIn={(e) => {
+        scale.value = withSpring(0.95, { damping: 15, stiffness: 400 });
+        onPressIn?.(e);
+      }}
+      onPressOut={(e) => {
+        scale.value = withSpring(1, { damping: 15, stiffness: 400 });
+        onPressOut?.(e);
+      }}
+      onPress={onPress}
+      style={[style, animStyle as any]}
+      {...props}
+    >
+      {children}
+    </Pressable>
+  );
+}
+
 const MEDIA_TYPES = [
   { key: '', label: 'All' },
-  { key: 'movie', label: 'Movie' },
-  { key: 'tv_show', label: 'TV Show' },
+  { key: 'movie', label: 'Movies' },
+  { key: 'tv_show', label: 'TV Shows' },
   { key: 'anime', label: 'Anime' },
-  { key: 'documentary', label: 'Doc' },
-  { key: 'book', label: 'Book' },
-  { key: 'podcast', label: 'Podcast' },
-  { key: 'game', label: 'Game' },
+  { key: 'book', label: 'Books' },
+  { key: 'podcast', label: 'Podcasts' },
+  { key: 'game', label: 'Games' },
 ];
 
 const STATUSES = [
-  { key: '', label: 'All' },
   { key: 'plan_to_watch', label: 'Plan to Watch' },
   { key: 'watching', label: 'Watching' },
   { key: 'completed', label: 'Completed' },
@@ -43,6 +85,7 @@ const STATUSES = [
 export default function SearchScreen() {
   const insets = useSafeAreaInsets();
   const theme = useTheme();
+  const haptics = useHaptics();
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [selectedType, setSelectedType] = useState('');
@@ -120,11 +163,11 @@ export default function SearchScreen() {
   }, [debouncedQuery, selectedType, selectedStatus, selectedTagIds, allItems, mediaTagMap]);
 
   const resultsLabel = useMemo(() => {
-    if (!debouncedQuery.trim() && !selectedType && !selectedStatus) {
+    if (!debouncedQuery.trim() && !selectedType && !selectedStatus && selectedTagIds.length === 0) {
       return 'Browse your library';
     }
     return `${filtered.length} result${filtered.length !== 1 ? 's' : ''}`;
-  }, [filtered.length, debouncedQuery, selectedType, selectedStatus]);
+  }, [filtered.length, debouncedQuery, selectedType, selectedStatus, selectedTagIds]);
 
   const clearFilters = useCallback(() => {
     setQuery('');
@@ -139,8 +182,6 @@ export default function SearchScreen() {
     );
   }, []);
 
-  const hasFilters = selectedType || selectedStatus || selectedTagIds.length > 0 || query.trim();
-
   const renderItem = useCallback(
     ({ item }: { item: MediaCardItem }) => (
       <MediaCard item={item} variant="list" />
@@ -150,177 +191,92 @@ export default function SearchScreen() {
 
   return (
     <ErrorBoundary name="SearchScreen">
-    <ThemedView style={styles.container}>
-      <ThemedView style={[styles.content, { paddingTop: insets.top }]}>
-        <ThemedView style={styles.header}>
-          <ThemedText type="subtitle">Search</ThemedText>
-        </ThemedView>
-
-        <View
-          style={[
-            styles.searchBar,
-            {
-              backgroundColor: theme.backgroundElement,
-              borderColor: theme.border || 'transparent',
-            },
-          ]}
-        >
-          <TextInput
-            style={[styles.searchInput, { color: theme.text }]}
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Search movies, shows, anime..."
-            placeholderTextColor={theme.textSecondary}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-          {query.length > 0 && (
-            <Pressable onPress={() => setQuery('')} style={styles.clearButton}>
-              <ThemedText themeColor="textSecondary">✕</ThemedText>
-            </Pressable>
-          )}
-        </View>
-
+      <ThemedView style={styles.container}>
         <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.chipsScroll}
-          contentContainerStyle={styles.chipsContent}
+          style={styles.scroll}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingTop: insets.top + Spacing.three },
+          ]}
+          showsVerticalScrollIndicator={false}
         >
-          {MEDIA_TYPES.map((type) => (
-            <Pressable
-              key={type.key}
-              style={({ pressed }) => [
-                styles.chip,
-                {
-                  backgroundColor:
-                    selectedType === type.key
-                      ? theme.primary || theme.backgroundSelected
-                      : theme.backgroundElement,
-                },
-                pressed && { opacity: 0.7 },
-              ]}
-              onPress={() =>
-                setSelectedType(selectedType === type.key ? '' : type.key)
-              }
-            >
-              <ThemedText
-                type="small"
-                style={[
-                  selectedType === type.key && { color: '#FFFFFF' },
-                ]}
-              >
-                {type.label}
-              </ThemedText>
-            </Pressable>
-          ))}
-        </ScrollView>
+          <ThemedView style={styles.inner}>
+            <ThemedText style={styles.title}>Discover</ThemedText>
 
-        <ThemedView style={styles.filterRow}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.statusChipsContent}
-          >
-            {STATUSES.map((s) => (
-              <Pressable
-                key={s.key}
-                style={({ pressed }) => [
-                  styles.chip,
-                  {
-                    backgroundColor:
-                      selectedStatus === s.key
-                        ? theme.primary || theme.backgroundSelected
-                        : theme.backgroundElement,
-                  },
-                  pressed && { opacity: 0.7 },
-                ]}
-                onPress={() =>
-                  setSelectedStatus(selectedStatus === s.key ? '' : s.key)
-                }
-              >
-                <ThemedText
-                  type="small"
-                  style={[
-                    selectedStatus === s.key && { color: '#FFFFFF' },
-                  ]}
-                >
-                  {s.label}
-                </ThemedText>
-              </Pressable>
-            ))}
-          </ScrollView>
+            <SearchBar
+              value={query}
+              onChangeText={setQuery}
+              placeholder="Search movies, shows, books..."
+              style={styles.searchBar}
+            />
 
-          {allTags.length > 0 && (
+            <FilterSegmentedTabs
+              items={MEDIA_TYPES}
+              selected={selectedType}
+              onSelect={(key) => setSelectedType(key === selectedType ? '' : key)}
+              style={styles.segmentedTabs}
+            />
+
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.statusChipsContent}
-              style={styles.tagsScroll}
+              contentContainerStyle={styles.pillsRow}
+              style={styles.pillsScroll}
             >
-              {allTags.map((t) => (
-                <Pressable
-                  key={t.id}
-                  style={({ pressed }) => [
-                    styles.chip,
-                    {
-                      backgroundColor: selectedTagIds.includes(t.id) ? t.color : theme.backgroundElement,
-                      borderColor: t.color,
-                      borderWidth: 1.5,
-                    },
-                    pressed && { opacity: 0.7 },
-                  ]}
-                  onPress={() => toggleTag(t.id)}
-                >
-                  <ThemedText
-                    type="small"
-                    style={[selectedTagIds.includes(t.id) && { color: '#FFFFFF' }]}
+              {STATUSES.map((s) => {
+                const isActive = selectedStatus === s.key;
+                return (
+                  <ScalePressable
+                    key={s.key}
+                    style={[
+                      styles.pill,
+                      {
+                        backgroundColor: isActive ? theme.primary : theme.backgroundElement,
+                      },
+                    ]}
+                    onPress={() => {
+                      haptics.light();
+                      setSelectedStatus(isActive ? '' : s.key);
+                    }}
                   >
-                    {t.name}
-                  </ThemedText>
-                </Pressable>
-              ))}
+                    <ThemedText
+                      style={[
+                        styles.pillText,
+                        { color: isActive ? '#FFFFFF' : theme.text },
+                      ]}
+                    >
+                      {s.label}
+                    </ThemedText>
+                  </ScalePressable>
+                );
+              })}
             </ScrollView>
-          )}
 
-          {hasFilters && (
-            <Pressable onPress={clearFilters} style={styles.clearFiltersButton}>
-              <ThemedText type="small" themeColor="textSecondary">
-                Clear
-              </ThemedText>
-            </Pressable>
-          )}
-        </ThemedView>
+            <ThemedText style={[styles.resultsLabel, { color: theme.textSecondary }]}>
+              {resultsLabel}
+            </ThemedText>
+          </ThemedView>
+        </ScrollView>
 
-        <ThemedText
-          themeColor="textSecondary"
-          type="small"
-          style={styles.resultsLabel}
-        >
-          {resultsLabel}
-        </ThemedText>
-
-        <FlatList
-          data={filtered}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={[
-            styles.listContent,
-            { paddingBottom: paddingBottom + Spacing.four },
-          ]}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <ThemedView style={styles.emptyState}>
-              <ThemedText themeColor="textSecondary">
-                {query.trim() || hasFilters
-                  ? 'No results found'
-                  : 'Start typing to search'}
-              </ThemedText>
-            </ThemedView>
-          }
-        />
+        <View style={[styles.listContainer, { paddingBottom }]}>
+          <FlatList
+            data={filtered}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <ThemedView style={styles.emptyState}>
+                <ThemedText style={[styles.emptyText, { color: theme.textSecondary }]}>
+                  {query.trim() || selectedType || selectedStatus || selectedTagIds.length > 0
+                    ? 'No results found'
+                    : 'Start typing to search'}
+                </ThemedText>
+              </ThemedView>
+            }
+          />
+        </View>
       </ThemedView>
-    </ThemedView>
     </ErrorBoundary>
   );
 }
@@ -329,69 +285,62 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
-    flex: 1,
+  scroll: {
+    flexShrink: 0,
+  },
+  scrollContent: {
     paddingHorizontal: Spacing.four,
+  },
+  inner: {
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
     width: '100%',
   },
-  header: {
-    paddingVertical: Spacing.three,
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: Spacing.three,
   },
   searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: Spacing.three,
-    paddingHorizontal: Spacing.four,
-    height: 48,
-    borderWidth: 1,
+    marginBottom: Spacing.three,
   },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    height: '100%',
+  segmentedTabs: {
+    marginBottom: Spacing.three,
   },
-  clearButton: {
-    padding: Spacing.one,
-  },
-  chipsScroll: {
-    marginTop: Spacing.three,
-    marginBottom: Spacing.two,
+  pillsScroll: {
+    marginBottom: Spacing.three,
     marginHorizontal: -Spacing.four,
   },
-  chipsContent: {
+  pillsRow: {
     paddingHorizontal: Spacing.four,
     gap: Spacing.two,
   },
-  statusChipsContent: {
-    gap: Spacing.two,
-  },
-  tagsScroll: {
-    marginTop: Spacing.one,
-    marginBottom: Spacing.one,
-  },
-  filterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Spacing.two,
-  },
-  clearFiltersButton: {
-    paddingLeft: Spacing.three,
-  },
-  chip: {
+  pill: {
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.two,
     borderRadius: 20,
   },
+  pillText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
   resultsLabel: {
+    fontSize: 13,
     marginBottom: Spacing.two,
+  },
+  listContainer: {
+    flex: 1,
+    paddingHorizontal: Spacing.four,
   },
   listContent: {
     gap: Spacing.two,
+    paddingBottom: Spacing.two,
   },
   emptyState: {
     paddingVertical: Spacing.seven,
     alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 15,
   },
 });

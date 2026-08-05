@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Icon } from '@/components/ui/icon';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { getTimelineHeatmapData, getStreakData } from '@/services/stats-engine';
@@ -65,10 +66,10 @@ export default function TimelineScreen() {
   const getHeatColor = (count: number) => {
     if (count === 0) return theme.backgroundElement;
     const intensity = Math.min(count / maxCount, 1);
-    if (intensity < 0.25) return theme.primaryDark || '#0274DF';
-    if (intensity < 0.5) return theme.primary || '#3C9FFE';
-    if (intensity < 0.75) return theme.primaryLight || '#6BB5FF';
-    return theme.success || '#34D399';
+    if (intensity < 0.25) return theme.primaryDark;
+    if (intensity < 0.5) return theme.primary;
+    if (intensity < 0.75) return theme.primaryLight;
+    return theme.success;
   };
 
   const years = useMemo(() => {
@@ -86,25 +87,25 @@ export default function TimelineScreen() {
     >
       <ThemedView style={[styles.container, { paddingTop: insets.top }]}>
         <ThemedView style={styles.header}>
-          <Pressable onPress={() => router.back()}>
-            <ThemedText type="link">Back</ThemedText>
+          <Pressable onPress={() => router.back()} style={[styles.backButton, { backgroundColor: theme.backgroundElement }]}>
+            <Icon name="arrow-left" size={20} color={theme.text} />
           </Pressable>
-          <ThemedText type="subtitle">Timeline</ThemedText>
-          <View style={{ width: 50 }} />
+          <ThemedText style={[styles.headerTitle, { color: theme.text }]}>Timeline</ThemedText>
+          <View style={styles.spacer} />
         </ThemedView>
 
         <View style={styles.streakRow}>
           <ThemedView type="backgroundElement" style={styles.streakCard}>
-            <ThemedText type="subtitle" style={styles.streakNumber}>{streakData.currentStreak}</ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">Day Streak</ThemedText>
+            <ThemedText style={[styles.streakValue, { color: theme.text }]}>{streakData.currentStreak}</ThemedText>
+            <ThemedText style={[styles.streakLabel, { color: theme.textSecondary }]}>Day Streak</ThemedText>
           </ThemedView>
           <ThemedView type="backgroundElement" style={styles.streakCard}>
-            <ThemedText type="subtitle" style={styles.streakNumber}>{streakData.longestStreak}</ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">Best Streak</ThemedText>
+            <ThemedText style={[styles.streakValue, { color: theme.text }]}>{streakData.longestStreak}</ThemedText>
+            <ThemedText style={[styles.streakLabel, { color: theme.textSecondary }]}>Best Streak</ThemedText>
           </ThemedView>
           <ThemedView type="backgroundElement" style={styles.streakCard}>
-            <ThemedText type="subtitle" style={styles.streakNumber}>{totalEvents}</ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">Events</ThemedText>
+            <ThemedText style={[styles.streakValue, { color: theme.text }]}>{totalEvents}</ThemedText>
+            <ThemedText style={[styles.streakLabel, { color: theme.textSecondary }]}>Events</ThemedText>
           </ThemedView>
         </View>
 
@@ -113,7 +114,7 @@ export default function TimelineScreen() {
             <Pressable
               key={y}
               style={({ pressed }) => [
-                styles.yearChip,
+                styles.yearPill,
                 {
                   backgroundColor: selectedYear === y ? theme.primary : theme.backgroundElement,
                 },
@@ -122,8 +123,10 @@ export default function TimelineScreen() {
               onPress={() => setSelectedYear(y)}
             >
               <ThemedText
-                type="small"
-                style={[selectedYear === y && { color: '#FFF' }]}
+                style={[
+                  styles.yearText,
+                  { color: selectedYear === y ? '#FFF' : theme.textSecondary },
+                ]}
               >
                 {y}
               </ThemedText>
@@ -136,7 +139,7 @@ export default function TimelineScreen() {
             <View style={styles.heatmap}>
               <View style={styles.heatmapHeader}>
                 {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].map((m) => (
-                  <ThemedText key={m} type="small" themeColor="textSecondary" style={styles.monthLabel}>
+                  <ThemedText key={m} style={[styles.monthLabel, { color: theme.textSecondary }]}>
                     {m}
                   </ThemedText>
                 ))}
@@ -159,16 +162,16 @@ export default function TimelineScreen() {
             </View>
           </ScrollView>
           <View style={styles.heatmapLegend}>
-            <ThemedText type="small" themeColor="textSecondary">Less</ThemedText>
+            <ThemedText style={[styles.legendText, { color: theme.textSecondary }]}>Less</ThemedText>
             {[0, 0.25, 0.5, 0.75, 1].map((v) => (
               <View key={v} style={[styles.legendCell, { backgroundColor: getHeatColor(v * maxCount) }]} />
             ))}
-            <ThemedText type="small" themeColor="textSecondary">More</ThemedText>
+            <ThemedText style={[styles.legendText, { color: theme.textSecondary }]}>More</ThemedText>
           </View>
         </ThemedView>
 
         {streakData.lastWatchDate && (
-          <ThemedText type="small" themeColor="textSecondary" style={styles.lastWatch}>
+          <ThemedText style={[styles.lastWatch, { color: theme.textSecondary }]}>
             Last activity: {formatDate(streakData.lastWatchDate)}
           </ThemedText>
         )}
@@ -182,12 +185,17 @@ const styles = StyleSheet.create({
   scrollContent: { flexDirection: 'row', justifyContent: 'center' },
   container: { flex: 1, paddingHorizontal: Spacing.four, maxWidth: MaxContentWidth, gap: Spacing.four, paddingBottom: Spacing.four },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: Spacing.three },
+  backButton: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { fontSize: 24, fontWeight: '700' },
+  spacer: { width: 40 },
   streakRow: { flexDirection: 'row', gap: Spacing.three },
-  streakCard: { flex: 1, borderRadius: Spacing.four, padding: Spacing.four, alignItems: 'center', gap: Spacing.half },
-  streakNumber: { fontSize: 28 },
+  streakCard: { flex: 1, borderRadius: 16, padding: 16, alignItems: 'center', gap: Spacing.half },
+  streakValue: { fontSize: 28, fontWeight: '700' },
+  streakLabel: { fontSize: 12 },
   yearRow: { flexDirection: 'row', gap: Spacing.two },
-  yearChip: { paddingHorizontal: Spacing.four, paddingVertical: Spacing.two, borderRadius: 20 },
-  heatmapSection: { borderRadius: Spacing.four, padding: Spacing.four, gap: Spacing.three },
+  yearPill: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
+  yearText: { fontSize: 12, fontWeight: '600' },
+  heatmapSection: { borderRadius: 16, padding: 16, gap: Spacing.three },
   heatmap: { gap: Spacing.two },
   heatmapHeader: { flexDirection: 'row', gap: 4 },
   monthLabel: { fontSize: 10, width: 14 },
@@ -196,5 +204,6 @@ const styles = StyleSheet.create({
   heatCell: { width: 12, height: 12, borderRadius: 2 },
   heatmapLegend: { flexDirection: 'row', alignItems: 'center', gap: Spacing.half, justifyContent: 'flex-end' },
   legendCell: { width: 12, height: 12, borderRadius: 2 },
+  legendText: { fontSize: 10 },
   lastWatch: { textAlign: 'center' },
 });
